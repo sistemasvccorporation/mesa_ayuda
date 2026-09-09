@@ -1,0 +1,270 @@
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import api from "../api/client.js";
+import { useAuth } from "../auth/AuthContext.jsx";
+
+const EVENTOS_USUARIO = [
+  { id: "enviado", label: "Cuando se registra / envía la solicitud" },
+  { id: "asignado", label: "Cuando se asigna un encargado" },
+  { id: "en_atencion", label: "Cuando entra en atención o se reabre" },
+  { id: "pendiente_usuario", label: "Cuando se espera una respuesta suya" },
+  { id: "derivado", label: "Cuando se deriva a otro encargado" },
+  { id: "atendido", label: "Cuando se marca como resuelta" },
+  { id: "cerrado", label: "Cuando se cierra" },
+  { id: "cancelado", label: "Cuando se cancela" },
+];
+
+const VACIO = {
+  correo_destino: "",
+  smtp_host: "",
+  smtp_puerto: 587,
+  smtp_usuario: "",
+  smtp_clave: "",
+  smtp_tls: true,
+  smtp_ssl: false,
+  correo_remitente: "",
+  avisar_solicitante: true,
+  avisar_solicitante_eventos: EVENTOS_USUARIO.map((e) => e.id),
+};
+
+export default function ConfiguracionPage() {
+  const { user, loadMe } = useAuth();
+  const qc = useQueryClient();
+  const [form, setForm] = useState(VACIO);
+  const { data, isLoading } = useQuery({
+    queryKey: ["config-mesa", user?.id_usuario],
+    queryFn: async () => (await api.get("/admin/configuracion/")).data,
+  });
+
+  useEffect(() => {
+    if (!data) return;
+    setForm({
+      correo_destino: data.correo_destino || "",
+      smtp_host: data.smtp_host || "",
+      smtp_puerto: data.smtp_puerto || 587,
+      smtp_usuario: data.smtp_usuario || "",
+      smtp_clave: "",
+      smtp_tls: data.smtp_tls !== false,
+      smtp_ssl: Boolean(data.smtp_ssl),
+      correo_remitente: data.correo_remitente || "",
+      avisar_solicitante: data.avisar_solicitante !== false,
+      avisar_solicitante_eventos: Array.isArray(data.avisar_solicitante_eventos)
+        ? data.avisar_solicitante_eventos
+        : EVENTOS_USUARIO.map((e) => e.id),
+    });
+  }, [data]);
+
+  const guardar = useMutation({
+    mutationFn: (payload) => api.patch("/admin/configuracion/", payload),
+    onSuccess: () => {
+      toast.success("Se guardó tu configuración. Los avisos saldrán con tu correo.");
+      qc.invalidateQueries({ queryKey: ["config-mesa", user?.id_usuario] });
+      loadMe?.();
+      setForm((f) => ({ ...f, smtp_clave: "" }));
+    },
+    onError: (e) => toast.error(e.response?.data?.detail || "No se pudo guardar"),
+  });
+
+  const probar = useMutation({
+    mutationFn: () =>
+      api.post("/admin/configuracion/probar/", {
+        correo: form.correo_destino || user?.correo,
+        smtp_host: form.smtp_host,
+        smtp_puerto: form.smtp_puerto,
+        smtp_usuario: form.smtp_usuario,
+        smtp_clave: form.smtp_clave,
+        smtp_tls: form.smtp_tls,
+        smtp_ssl: form.smtp_ssl,
+        correo_remitente: form.correo_remitente,
+      }),
+    onSuccess: (res) => toast.success(`Correo de prueba enviado a ${(res.data.enviado_a || []).join(", ")}`),
+    onError: (e) => toast.error(e.response?.data?.detail || "No se pudo enviar la prueba"),
+  });
+
+  function set(k, v) {
+    setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  function usarMiCorreo() {
+    const correo = data?.correo_sugerido || user?.correo || "";
+    if (!correo) {
+      toast.error("Tu usuario SIGeCom no tiene correo.");
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      correo_destino: correo,
+      smtp_usuario: correo,
+      correo_remitente: correo,
+    }));
+  }
+
+  function presetOffice() {
+    setForm((f) => ({ ...f, smtp_host: "smtp.office365.com", smtp_puerto: 587, smtp_tls: true, smtp_ssl: false }));
+  }
+
+  function presetGmail() {
+    setForm((f) => ({ ...f, smtp_host: "smtp.gmail.com", smtp_puerto: 587, smtp_tls: true, smtp_ssl: false }));
+  }
+
+  function toggleEvento(id) {
+    setForm((f) => {
+      const tiene = f.avisar_solicitante_eventos.includes(id);
+      return {
+        ...f,
+        avisar_solicitante_eventos: tiene
+          ? f.avisar_solicitante_eventos.filter((e) => e !== id)
+          : [...f.avisar_solicitante_eventos, id],
+      };
+    });
+  }
+
+  function onSave() {
+    const payload = { ...form };
+    if (!payload.smtp_clave) delete payload.smtp_clave;
+    guardar.mutate(payload);
+  }
+
+  if (isLoading) return <p>Cargando…</p>;
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold">Configuración de correo</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Esta ficha es solo de <strong>{user?.nombre_completo}</strong>
+          {user?.correo ? ` (${user.correo})` : ""}. Otro administrador entra con su usuario y ve la suya, no la tuya.
+        </p>
+      </div>
+
+      {data && !data.smtp_listo && (
+        <div className="rounded-card border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          Aún no tienes configurado el envío SMTP. Mientras tanto, cuando cambies una solicitud verás el aviso{" "}
+          <strong>«El correo no fue enviado»</strong>. Completa servidor, tu correo y la clave, y guarda.
+        </div>
+      )}
+
+      <section className="rounded-card border border-slate-200 bg-white p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-semibold">Bandeja de la mesa</h3>
+          <button type="button" className="text-xs font-medium text-brand-primary hover:underline" onClick={usarMiCorreo}>
+            Usar mi correo SIGeCom{user?.correo ? ` (${user.correo})` : ""}
+          </button>
+        </div>
+        <label className="block text-sm font-medium">
+          Correo donde llegan las solicitudes
+          <input
+            className="mt-1 w-full rounded-lg border px-3 py-2"
+            type="email"
+            value={form.correo_destino}
+            onChange={(e) => set("correo_destino", e.target.value)}
+            placeholder="tu.correo@vc-corporation.com"
+          />
+        </label>
+        <p className="mt-2 text-xs text-slate-500">
+          Llegan a <strong>tu</strong> bandeja. El correo de otro admin no se mezcla con el tuyo.
+        </p>
+      </section>
+
+      <section className="rounded-card border border-slate-200 bg-white p-6">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="font-semibold">Avisos al usuario de la solicitud</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              El correo llega al contacto de cada ticket (el que el usuario indicó al registrarla, o el de su cuenta SIGeCom).
+            </p>
+          </div>
+          <label className="flex shrink-0 items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-brand-primary"
+              checked={form.avisar_solicitante}
+              onChange={(e) => set("avisar_solicitante", e.target.checked)}
+            />
+            Activado
+          </label>
+        </div>
+        <div className={`space-y-2 ${form.avisar_solicitante ? "" : "pointer-events-none opacity-50"}`}>
+          {EVENTOS_USUARIO.map((ev) => (
+            <label key={ev.id} className="flex items-start gap-3 rounded-lg border border-slate-100 px-3 py-2 text-sm hover:bg-slate-50">
+              <input
+                type="checkbox"
+                className="mt-0.5 accent-brand-primary"
+                checked={form.avisar_solicitante_eventos.includes(ev.id)}
+                onChange={() => toggleEvento(ev.id)}
+              />
+              <span>{ev.label}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-card border border-slate-200 bg-white p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-semibold">Servidor de envío (SMTP)</h3>
+          <div className="flex gap-2 text-xs">
+            <button type="button" className="rounded-full bg-slate-100 px-3 py-1 font-medium" onClick={presetOffice}>
+              Office 365
+            </button>
+            <button type="button" className="rounded-full bg-slate-100 px-3 py-1 font-medium" onClick={presetGmail}>
+              Gmail
+            </button>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-sm font-medium sm:col-span-2">
+            Servidor
+            <input className="mt-1 w-full rounded-lg border px-3 py-2" value={form.smtp_host} onChange={(e) => set("smtp_host", e.target.value)} placeholder="smtp.office365.com" />
+          </label>
+          <label className="text-sm font-medium">
+            Puerto
+            <input className="mt-1 w-full rounded-lg border px-3 py-2" type="number" value={form.smtp_puerto} onChange={(e) => set("smtp_puerto", Number(e.target.value) || 587)} />
+          </label>
+          <label className="flex items-end gap-4 pb-2 text-sm">
+            <span className="flex items-center gap-2">
+              <input type="checkbox" checked={form.smtp_tls} onChange={(e) => set("smtp_tls", e.target.checked)} /> TLS
+            </span>
+            <span className="flex items-center gap-2">
+              <input type="checkbox" checked={form.smtp_ssl} onChange={(e) => set("smtp_ssl", e.target.checked)} /> SSL
+            </span>
+          </label>
+          <label className="text-sm font-medium sm:col-span-2">
+            Usuario SMTP (normalmente tu correo)
+            <input className="mt-1 w-full rounded-lg border px-3 py-2" value={form.smtp_usuario} onChange={(e) => set("smtp_usuario", e.target.value)} placeholder={user?.correo || ""} />
+          </label>
+          <label className="text-sm font-medium sm:col-span-2">
+            Contraseña o contraseña de aplicación
+            <input
+              className="mt-1 w-full rounded-lg border px-3 py-2"
+              type="password"
+              autoComplete="new-password"
+              value={form.smtp_clave}
+              onChange={(e) => set("smtp_clave", e.target.value)}
+              placeholder={data?.smtp_clave_configurada ? "••••••••  (deja vacío para no cambiarla)" : "Escribe la clave"}
+            />
+          </label>
+          <label className="text-sm font-medium sm:col-span-2">
+            Remitente (From)
+            <input className="mt-1 w-full rounded-lg border px-3 py-2" type="email" value={form.correo_remitente} onChange={(e) => set("correo_remitente", e.target.value)} placeholder="El mismo correo corporativo" />
+          </label>
+        </div>
+      </section>
+
+      <div className="flex flex-wrap justify-end gap-3">
+        <button type="button" disabled={probar.isPending || guardar.isPending} onClick={() => probar.mutate()} className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50">
+          {probar.isPending ? (
+            <>
+              Enviando…
+            </>
+          ) : (
+            "Enviar correo de prueba"
+          )}
+        </button>
+        <button type="button" disabled={guardar.isPending || probar.isPending} onClick={onSave} className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
+          {guardar.isPending ? "Guardando…" : "Guardar configuración"}
+        </button>
+      </div>
+    </div>
+  );
+}
