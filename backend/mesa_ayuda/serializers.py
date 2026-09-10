@@ -5,7 +5,7 @@ from rest_framework import serializers
 from users.models import Area, Usuario
 from users.serializers import PublicUserSerializer
 
-from .models import Adjunto, Categoria, Comentario, ConfiguracionMesa, EstadoSolicitud, HistorialEstado, MesaRolUsuario, Solicitud, TipoActividad
+from .models import Adjunto, Categoria, Comentario, ConfiguracionMesa, EstadoSolicitud, HistorialEstado, MesaRolUsuario, Solicitud, TipoActividad, correo_de
 from .services import acciones_disponibles, nombre_estado, resumen_sla, validar_adjunto
 
 
@@ -240,11 +240,15 @@ class ConfiguracionMesaSerializer(serializers.ModelSerializer):
     smtp_clave_configurada = serializers.SerializerMethodField()
     smtp_listo = serializers.SerializerMethodField()
     correo_sugerido = serializers.SerializerMethodField()
+    usuario = serializers.SerializerMethodField()
+    usuario_nombre = serializers.SerializerMethodField()
 
     class Meta:
         model = ConfiguracionMesa
         fields = (
             "id_usuario",
+            "usuario",
+            "usuario_nombre",
             "correo_destino",
             "smtp_host",
             "smtp_puerto",
@@ -259,7 +263,14 @@ class ConfiguracionMesaSerializer(serializers.ModelSerializer):
             "avisar_solicitante_eventos",
             "correo_sugerido",
         )
-        read_only_fields = ("id_usuario", "smtp_clave_configurada", "smtp_listo", "correo_sugerido")
+        read_only_fields = (
+            "id_usuario",
+            "usuario",
+            "usuario_nombre",
+            "smtp_clave_configurada",
+            "smtp_listo",
+            "correo_sugerido",
+        )
 
     def validate_avisar_solicitante_eventos(self, value):
         from .models import EVENTOS_AVISO_SOLICITANTE
@@ -277,17 +288,39 @@ class ConfiguracionMesaSerializer(serializers.ModelSerializer):
     def get_smtp_listo(self, obj):
         return bool(obj.smtp_listo)
 
+    def _dueño(self, obj):
+        return Usuario.objects.filter(pk=obj.id_usuario).first()
+
+    def get_usuario(self, obj):
+        user = self._dueño(obj)
+        return user.usuario if user else ""
+
+    def get_usuario_nombre(self, obj):
+        user = self._dueño(obj)
+        return user.nombre_completo if user else ""
+
     def get_correo_sugerido(self, obj):
         request = self.context.get("request")
-        if request and getattr(request.user, "correo", None):
-            return request.user.correo
-        return ""
+        if request:
+            sugerido = correo_de(request.user)
+            if sugerido:
+                return sugerido
+        return correo_de(self._dueño(obj))
 
     def update(self, instance, validated_data):
         clave = validated_data.pop("smtp_clave", None)
+        viejo_destino = (instance.correo_destino or "").strip()
         for k, v in validated_data.items():
             setattr(instance, k, v)
         if clave:
             instance.smtp_clave = clave
+        destino = (instance.correo_destino or "").strip()
+        if destino:
+            smtp_user = (instance.smtp_usuario or "").strip()
+            remitente = (instance.correo_remitente or "").strip()
+            if not smtp_user or smtp_user == viejo_destino:
+                instance.smtp_usuario = destino
+            if not remitente or remitente == viejo_destino:
+                instance.correo_remitente = destino
         instance.save()
         return instance

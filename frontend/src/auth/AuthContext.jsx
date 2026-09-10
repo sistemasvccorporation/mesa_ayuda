@@ -1,11 +1,14 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import api from "../api/client.js";
+import { conectarSesion } from "../api/cache.js";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
 
   async function loadMe() {
     const token = localStorage.getItem("access");
@@ -28,10 +31,16 @@ export function AuthProvider({ children }) {
     loadMe();
   }, []);
 
+  useEffect(() => {
+    conectarSesion(setUser);
+    return () => conectarSesion(null);
+  }, []);
+
   async function login(usuario, password) {
     const { data } = await api.post("/auth/login/", { usuario, password });
     localStorage.setItem("access", data.access);
     localStorage.setItem("refresh", data.refresh);
+    qc.clear();
     try {
       const me = await api.get("/auth/me/");
       setUser(me.data);
@@ -51,6 +60,7 @@ export function AuthProvider({ children }) {
     }
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
+    qc.clear();
     setUser(null);
   }
 

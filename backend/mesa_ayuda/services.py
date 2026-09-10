@@ -8,7 +8,20 @@ from django.utils import timezone
 
 from users.models import Usuario
 
-from .models import Adjunto, Comentario, EstadoSolicitud, HistorialEstado, MesaRolUsuario, Solicitud
+from .models import Adjunto, Comentario, ConfiguracionMesa, EstadoSolicitud, HistorialEstado, MesaRolUsuario, Solicitud
+
+MENSAJE_SMTP_INCOMPLETO = (
+    "Debes configurar tu correo SMTP antes de enviar. Entra a Configuración, guarda servidor, correo y clave."
+)
+
+
+def exigir_smtp_si_admin(actor):
+    rol = getattr(actor, "rol_mesa", "solicitante") or "solicitante"
+    if rol != "admin":
+        return
+    cfg = ConfiguracionMesa.objects.filter(id_usuario=actor.id_usuario).first()
+    if not cfg or not cfg.smtp_listo:
+        raise ValidationError(MENSAJE_SMTP_INCOMPLETO)
 
 ESTADOS_SISTEMA = [
     ("borrador", "Borrador", "#94A3B8", 1, False),
@@ -280,6 +293,8 @@ def guardar_adjuntos(solicitud, files, usuario, comentario=None):
 
 
 def aplicar_transicion(solicitud, nuevo_estado, actor, motivo="", encargado=None, tomar=False):
+    if nuevo_estado == "enviado":
+        exigir_smtp_si_admin(actor)
 
     rol = actor.rol_mesa
     actuales = list(transiciones_permitidas(solicitud.estado_id, rol))

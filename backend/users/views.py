@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from mesa_ayuda.models import MesaRolUsuario
-from .serializers import MeSerializer
+from .serializers import MeSerializer, PerfilUpdateSerializer
 
 
 def asegurar_bootstrap_admin(user):
@@ -58,4 +58,12 @@ class LogoutView(APIView):
 class MeView(APIView):
     def get(self, request):
         asegurar_bootstrap_admin(request.user)
+        return Response(MeSerializer(request.user).data)
+
+    def patch(self, request):
+        asegurar_bootstrap_admin(request.user)
+        serializer = PerfilUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        request.user.refresh_from_db()
         return Response(MeSerializer(request.user).data)

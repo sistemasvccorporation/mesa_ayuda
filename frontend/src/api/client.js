@@ -1,4 +1,5 @@
 import axios from "axios";
+import { actualizarCacheTrasCambio } from "./cache.js";
 
 const api = axios.create({
   baseURL: "/api",
@@ -7,11 +8,25 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access");
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  config.headers["Cache-Control"] = "no-cache";
+  config.headers.Pragma = "no-cache";
+  const metodo = String(config.method || "get").toLowerCase();
+  if (metodo === "get") {
+    const params = config.params && typeof config.params === "object" ? config.params : {};
+    config.params = { ...params, _: Date.now() };
+  }
   return config;
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    try {
+      actualizarCacheTrasCambio(res);
+    } catch {
+      /* la UI no debe fallar si no se pudo refrescar */
+    }
+    return res;
+  },
   async (error) => {
     const original = error.config;
     if (error.response?.status === 401 && !original._retry) {

@@ -12,6 +12,7 @@ import {
   UserCheck,
   Menu,
   X,
+  UserCircle,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
@@ -75,6 +76,9 @@ export default function AppLayout() {
           </NavLink>
         </>
       )}
+      <NavLink to="/perfil" className={linkClass}>
+        <UserCircle size={18} /> Mi perfil
+      </NavLink>
     </>
   );
 
@@ -123,12 +127,15 @@ export default function AppLayout() {
           </div>
           <div className="flex min-w-0 items-center gap-2 sm:gap-4">
             <NotificationBell />
-            <div className="hidden min-w-0 text-right sm:block">
+            <NavLink to="/perfil" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 sm:hidden" aria-label="Mi perfil">
+              <UserCircle size={22} />
+            </NavLink>
+            <NavLink to="/perfil" className="hidden min-w-0 text-right hover:text-brand-primary sm:block">
               <div className="truncate font-medium">{user?.nombre_completo}</div>
               <div className="truncate text-xs text-slate-500">
                 {user?.area?.nombre || "Sin área"} · {user?.rol}
               </div>
-            </div>
+            </NavLink>
           </div>
         </header>
         <main className="min-w-0 p-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6 lg:p-8">

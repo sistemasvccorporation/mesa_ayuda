@@ -9,6 +9,7 @@ import DetalleSolicitudPage from "./pages/DetalleSolicitudPage.jsx";
 import RolesPage from "./pages/RolesPage.jsx";
 import CatalogosPage from "./pages/CatalogosPage.jsx";
 import ConfiguracionPage from "./pages/ConfiguracionPage.jsx";
+import PerfilPage from "./pages/PerfilPage.jsx";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="solicitudes" element={<SolicitudesPage />} />
         <Route path="solicitudes/nueva" element={<NuevaSolicitudPage />} />
         <Route path="solicitudes/:id" element={<DetalleSolicitudPage />} />
+        <Route path="perfil" element={<PerfilPage />} />
         <Route
           path="admin/roles"
           element={

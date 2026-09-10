@@ -7,6 +7,7 @@ from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status, viewsets
+from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -36,7 +37,15 @@ from .serializers import (
     SolicitudWriteSerializer,
     TipoActividadSerializer,
 )
-from .services import aplicar_transicion, asegurar_estados, guardar_adjuntos, registrar_historial, siguiente_codigo, sla_estado
+from .services import (
+    aplicar_transicion,
+    asegurar_estados,
+    exigir_smtp_si_admin,
+    guardar_adjuntos,
+    registrar_historial,
+    siguiente_codigo,
+    sla_estado,
+)
 from notificaciones.mail import enviar_correo_solicitud
 
 
@@ -197,6 +206,8 @@ class SolicitudViewSet(viewsets.ModelViewSet):
         if not files:
             files = list(self.request.FILES.getlist("files")) + list(self.request.FILES.getlist("files[]"))
         enviar = str(self.request.data.get("enviar", "")).lower() in ("1", "true", "si", "yes")
+        if enviar:
+            exigir_smtp_si_admin(user)
         with transaction.atomic():
             asegurar_estados()
             estado_id = "enviado" if enviar else "borrador"
@@ -418,11 +429,14 @@ def admin_roles(request):
         data = []
         for rol in roles:
             user = Usuario.objects.filter(pk=rol.id_usuario).first()
+            cfg = ConfiguracionMesa.objects.filter(id_usuario=rol.id_usuario).first()
             data.append(
                 {
                     "id_usuario": rol.id_usuario,
                     "rol": rol.rol,
                     "usuario": PublicUserSerializer(user).data if user else None,
+                    "correo_destino": (cfg.correo_destino if cfg else "") or "",
+                    "correo_smtp_listo": bool(cfg and cfg.smtp_listo),
                 }
             )
         return Response(data)
@@ -443,27 +457,52 @@ def admin_roles(request):
                 status=400,
             )
     obj, _ = MesaRolUsuario.objects.update_or_create(id_usuario=user.id_usuario, defaults={"rol": rol})
-    return Response({"id_usuario": obj.id_usuario, "rol": obj.rol, "usuario": PublicUserSerializer(user).data})
+    correo = None
+    smtp_listo = False
+    if obj.rol == MesaRolUsuario.ROL_ADMIN:
+        cfg = ConfiguracionMesa.asegurar_para_admin(user, plantilla=request.user)
+        correo = cfg.correo_destino
+        smtp_listo = bool(cfg.smtp_listo)
+    return Response(
+        {
+            "id_usuario": obj.id_usuario,
+            "rol": obj.rol,
+            "usuario": PublicUserSerializer(user).data,
+            "correo_destino": correo,
+            "correo_smtp_listo": smtp_listo,
+        }
+    )
+
+
+def _sin_cache(response):
+    response["Cache-Control"] = "no-store, no-cache, private, must-revalidate, max-age=0"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    response["Vary"] = "Authorization"
+    return response
 
 
 @api_view(["GET", "PUT", "PATCH"])
 @permission_classes([IsAdminMesa])
+@never_cache
 def admin_configuracion(request):
     cfg = ConfiguracionMesa.obtener(request.user)
     if request.method == "GET":
-        return Response(ConfiguracionMesaSerializer(cfg, context={"request": request}).data)
+        return _sin_cache(Response(ConfiguracionMesaSerializer(cfg, context={"request": request}).data))
     serializer = ConfiguracionMesaSerializer(cfg, data=request.data, partial=True, context={"request": request})
     serializer.is_valid(raise_exception=True)
     serializer.save()
-    return Response(ConfiguracionMesaSerializer(cfg, context={"request": request}).data)
+    cfg.refresh_from_db()
+    return _sin_cache(Response(ConfiguracionMesaSerializer(cfg, context={"request": request}).data))
 
 
 @api_view(["POST"])
 @permission_classes([IsAdminMesa])
+@never_cache
 def admin_configuracion_probar(request):
     from django.core.mail import EmailMessage
 
-    from notificaciones.mail import conexion_correo, correo_remitente
+    from notificaciones.mail import conexion_correo, correo_remitente, mensaje_error_smtp
 
     cfg = ConfiguracionMesa.obtener(request.user)
     data = request.data or {}
@@ -486,7 +525,7 @@ def admin_configuracion_probar(request):
     if not conn:
         return Response(
             {
-                "detail": "Falta el servidor SMTP. Completa host, usuario y clave (Office 365: smtp.office365.com, puerto 587, TLS)."
+                "detail": "Falta el servidor SMTP. Completa host, usuario y clave (cPanel: mail.vc-corporation.com, puerto 465, SSL)."
             },
             status=400,
         )
@@ -504,5 +543,5 @@ def admin_configuracion_probar(request):
         )
         mail.send(fail_silently=False)
     except Exception as exc:
-        return Response({"detail": f"No se pudo enviar: {exc}"}, status=400)
+        return Response({"detail": mensaje_error_smtp(exc)}, status=400)
     return Response({"ok": True, "enviado_a": para})

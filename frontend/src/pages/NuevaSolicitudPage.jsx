@@ -6,6 +6,7 @@ import { FileText, Image as ImageIcon, Loader2, Paperclip, Send, X } from "lucid
 import api from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { avisarCorreo } from "../utils/correo.js";
+import { useAvisoCorreoListo } from "../components/AvisoCorreoListo.jsx";
 
 const ALLOWED = ["image/png", "image/jpeg", "application/pdf"];
 const PRIORIDADES = [
@@ -22,6 +23,7 @@ function asList(data) {
 export default function NuevaSolicitudPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { exigirCorreoListo, abrirSiError, modal: modalCorreo } = useAvisoCorreoListo();
   const [categoria, setCategoria] = useState("");
   const [tipo, setTipo] = useState("");
   const [area, setArea] = useState(user?.area?.id_area || "");
@@ -103,6 +105,7 @@ export default function NuevaSolicitudPage() {
       return;
     }
     setFaltantes([]);
+    if (enviar && !(await exigirCorreoListo(email))) return;
     const form = new FormData();
     form.append("categoria", categoria);
     form.append("tipo_actividad", tipo);
@@ -121,6 +124,7 @@ export default function NuevaSolicitudPage() {
       if (enviar) avisarCorreo(data);
       navigate(`/solicitudes/${data.id}`);
     } catch (err) {
+      if (enviar && abrirSiError(err)) return;
       const d = err.response?.data?.detail;
       toast.error(Array.isArray(d) ? d.join(" ") : d || "No se pudo guardar");
     } finally {
@@ -131,6 +135,7 @@ export default function NuevaSolicitudPage() {
 
   return (
     <div className="mx-auto max-w-3xl pb-[calc(7rem+env(safe-area-inset-bottom))]">
+      {modalCorreo}
       <div className="mb-6">
         <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Nueva solicitud</h2>
         <p className="mt-1 text-sm text-slate-500">Elige el tema, adjunta si hace falta y envía. El estado lo pone el sistema.</p>

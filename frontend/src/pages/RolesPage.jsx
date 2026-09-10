@@ -18,8 +18,13 @@ export default function RolesPage() {
 
   const grant = useMutation({
     mutationFn: (id) => api.post("/admin/roles/", { id_usuario: id, rol: "admin" }),
-    onSuccess: () => {
-      toast.success("Ya tiene los mismos permisos que tú. Debe volver a entrar para verlos.");
+    onSuccess: (res) => {
+      const correo = res.data?.correo_destino;
+      toast.success(
+        correo
+          ? `Ya tiene tus permisos y su propia ficha de correo (${correo}). Debe volver a entrar, revisar Configuración y guardar su clave SMTP.`
+          : "Ya tiene tus permisos y su ficha de correo. Debe volver a entrar, poner su correo en Configuración y guardar su clave SMTP."
+      );
       setSelected(null);
       qc.invalidateQueries({ queryKey: ["roles"] });
     },
@@ -41,8 +46,8 @@ export default function RolesPage() {
         <h2 className="text-xl font-bold">Brindar permisos</h2>
         <p className="mt-1 text-sm text-slate-500">
           Elige un colaborador activo y dale <strong>los mismos permisos que tú</strong>: verá todas las
-          solicitudes, podrá asignar encargados y podrá dar permisos a otras personas. No hay rol de técnico
-          aquí; eso se define al asignar cada solicitud.
+          solicitudes, podrá asignar encargados y tendrá <strong>su propia configuración de correo</strong>, no la tuya.
+          Debe entrar con su usuario, revisar el correo y guardar su clave SMTP.
         </p>
         <div className="mt-4">
           <UserPicker label="¿A quién le das tus permisos?" value={selected} onChange={setSelected} />
@@ -63,6 +68,14 @@ export default function RolesPage() {
               <div className="min-w-0">
                 <div className="font-medium">{r.usuario?.nombre_completo || r.id_usuario}</div>
                 <div className="text-xs text-slate-500">{r.usuario?.usuario}</div>
+                {r.correo_destino ? (
+                  <div className="text-xs text-slate-500">{r.correo_destino}</div>
+                ) : (
+                  <div className="text-xs text-amber-700">Sin correo en su ficha</div>
+                )}
+                {!r.correo_smtp_listo && r.correo_destino ? (
+                  <div className="text-xs text-amber-700">Falta clave SMTP</div>
+                ) : null}
               </div>
               {r.id_usuario !== yo?.id_usuario ? (
                 <button

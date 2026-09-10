@@ -16,6 +16,18 @@ LAN_MODE = os.getenv("SIGECOM_LAN", "0") == "1"
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 if LAN_MODE or "*" in ALLOWED_HOSTS:
     ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = [
+        *ALLOWED_HOSTS,
+        ".trycloudflare.com",
+        ".loca.lt",
+        ".lhr.life",
+        ".ngrok-free.app",
+        ".ngrok.io",
+        ".localhost.run",
+        ".serveo.net",
+        ".vc-corporation.com",
+    ]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -115,18 +127,21 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)
+CSRF_TRUSTED_ORIGINS = [
+    *CSRF_TRUSTED_ORIGINS,
+    "https://*.trycloudflare.com",
+    "https://*.loca.lt",
+    "https://*.lhr.life",
+    "https://*.ngrok-free.app",
+    "https://*.ngrok.io",
+    "https://*.localhost.run",
+    "https://*.serveo.net",
+    "https://*.vc-corporation.com",
+]
 if LAN_MODE:
     CORS_ALLOW_ALL_ORIGINS = True
     CSRF_TRUSTED_ORIGINS = [
         *CSRF_TRUSTED_ORIGINS,
-        "https://*.vc-corporation.com",
-        "https://*.trycloudflare.com",
-        "https://*.loca.lt",
-        "https://*.ngrok-free.app",
-        "https://*.ngrok.io",
-        "https://*.lhr.life",
-        "https://*.localhost.run",
-        "https://*.serveo.net",
         "http://127.0.0.1:8000",
         "http://localhost:8000",
     ]

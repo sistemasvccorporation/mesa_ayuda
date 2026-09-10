@@ -8,6 +8,19 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "logo-vc.png"],
+      workbox: {
+        navigateFallbackDenylist: [/^\/api/, /^\/media/],
+        runtimeCaching: [
+          {
+            urlPattern: /\/api\//,
+            handler: "NetworkOnly",
+          },
+          {
+            urlPattern: /\/media\//,
+            handler: "NetworkOnly",
+          },
+        ],
+      },
       manifest: {
         name: "SIGeCom Mesa de Ayuda",
         short_name: "Mesa Ayuda",

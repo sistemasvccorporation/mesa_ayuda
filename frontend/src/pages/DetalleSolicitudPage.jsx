@@ -7,12 +7,14 @@ import { useAuth } from "../auth/AuthContext.jsx";
 import { FileDown, Loader2 } from "lucide-react";
 import UserPicker from "../components/UserPicker.jsx";
 import { avisarCorreo } from "../utils/correo.js";
+import { useAvisoCorreoListo } from "../components/AvisoCorreoListo.jsx";
 
 const PRIORIDAD = { baja: "Baja", media: "Media", alta: "Alta", critica: "Crítica" };
 
 export default function DetalleSolicitudPage() {
   const { id } = useParams();
   const { isAdmin, isTecnico, user } = useAuth();
+  const { exigirCorreoListo, abrirSiError, modal: modalCorreo } = useAvisoCorreoListo();
   const qc = useQueryClient();
   const [encargado, setEncargado] = useState(null);
   const [motivo, setMotivo] = useState("");
@@ -79,7 +81,10 @@ export default function DetalleSolicitudPage() {
       setMotivo("");
       refresh();
     },
-    onError: (e) => toast.error(detalleError(e) || "No se pudo completar la acción"),
+    onError: (e) => {
+      if (abrirSiError(e)) return;
+      toast.error(detalleError(e) || "No se pudo completar la acción");
+    },
     onSettled: liberar,
   });
 
@@ -120,12 +125,13 @@ export default function DetalleSolicitudPage() {
   const ocupado =
     transicionar.isPending || asignar.isPending || derivar.isPending || comentar.isPending || tomar.isPending || descargandoPdf;
 
-  function ejecutar(accion) {
+  async function ejecutar(accion) {
     if (ocupado || enviandoRef.current) return;
     if (accion.requiere_motivo && !motivo.trim()) {
       toast.error("Escribe el motivo o la nota de resolución antes de continuar.");
       return;
     }
+    if (accion.codigo === "enviado" && !(await exigirCorreoListo())) return;
     intentar(() => transicionar.mutate(accion));
   }
 
@@ -141,6 +147,7 @@ export default function DetalleSolicitudPage() {
 
   return (
     <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
+      {modalCorreo}
       <div className="min-w-0 space-y-6">
         <div className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">

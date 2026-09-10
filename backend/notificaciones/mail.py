@@ -26,7 +26,7 @@ def conexion_correo(cfg=None):
         return None
     host = (cfg.smtp_host or "").strip()
     user = (cfg.smtp_usuario or "").strip()
-    password = cfg.smtp_clave or ""
+    password = (cfg.smtp_clave or "").strip()
     if not host or not user or not password:
         return None
     puerto = cfg.smtp_puerto or 587
@@ -42,6 +42,22 @@ def conexion_correo(cfg=None):
         use_ssl=use_ssl,
         fail_silently=False,
     )
+
+
+def mensaje_error_smtp(exc):
+    texto = str(exc or "")
+    bajo = texto.lower()
+    if "535" in texto or "incorrect authentication" in bajo or "authentication failed" in bajo:
+        return (
+            "El servidor rechazó usuario o contraseña (error 535). "
+            "Escribe de nuevo la clave del buzón en cPanel (la de webmail, no la de SIGeCom) "
+            "con el correo completo como usuario, guarda y vuelve a probar."
+        )
+    if "534" in texto or "5.7.3" in texto:
+        return "El servidor exige otra forma de autenticación. Revisa usuario, clave y que SSL/TLS coincidan con el puerto."
+    if "connection" in bajo or "timed out" in bajo or "getaddrinfo" in bajo:
+        return f"No se pudo conectar al servidor SMTP. {texto}"
+    return f"No se pudo enviar: {texto}"
 
 
 def correo_remitente(cfg=None):

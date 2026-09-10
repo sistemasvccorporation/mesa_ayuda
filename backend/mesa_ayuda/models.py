@@ -178,6 +178,12 @@ EVENTOS_AVISO_SOLICITANTE = [
 ]
 
 
+def correo_de(user):
+    if not user:
+        return ""
+    return ((getattr(user, "correo", None) or "").strip() or (getattr(user, "correo_personal", None) or "").strip())
+
+
 def _eventos_aviso_solicitante_default():
     return list(EVENTOS_AVISO_SOLICITANTE)
 
@@ -205,9 +211,15 @@ class ConfiguracionMesa(models.Model):
     def obtener(cls, usuario):
         from users.models import Usuario
 
-        uid = getattr(usuario, "id_usuario", usuario)
+        uid = getattr(usuario, "id_usuario", None)
+        if uid is None:
+            uid = usuario
+        try:
+            uid = int(uid)
+        except (TypeError, ValueError):
+            raise ValueError("No se pudo identificar al usuario de la configuración de correo.")
         user = usuario if hasattr(usuario, "correo") else Usuario.objects.filter(pk=uid).first()
-        correo = (getattr(user, "correo", None) or "").strip()
+        correo = correo_de(user)
         obj, _ = cls.objects.get_or_create(
             id_usuario=uid,
             defaults={
@@ -216,6 +228,54 @@ class ConfiguracionMesa(models.Model):
                 "correo_remitente": correo,
             },
         )
+        changed = []
+        if correo:
+            if not (obj.correo_destino or "").strip():
+                obj.correo_destino = correo
+                changed.append("correo_destino")
+            if not (obj.smtp_usuario or "").strip():
+                obj.smtp_usuario = correo
+                changed.append("smtp_usuario")
+            if not (obj.correo_remitente or "").strip():
+                obj.correo_remitente = correo
+                changed.append("correo_remitente")
+            if changed:
+                obj.save(update_fields=changed)
+        return obj
+
+    @classmethod
+    def asegurar_para_admin(cls, usuario, plantilla=None):
+        """Crea o completa la ficha de correo del admin, con su correo y el SMTP de quien le dio permisos."""
+        obj = cls.obtener(usuario)
+        plantilla_cfg = None
+        if plantilla is not None:
+            plantilla_cfg = plantilla if isinstance(plantilla, cls) else cls.objects.filter(
+                id_usuario=getattr(plantilla, "id_usuario", plantilla)
+            ).first()
+        if plantilla_cfg and plantilla_cfg.id_usuario == obj.id_usuario:
+            plantilla_cfg = None
+        changed = []
+        host_actual = (obj.smtp_host or "").strip()
+        host_plantilla = (plantilla_cfg.smtp_host or "").strip() if plantilla_cfg else ""
+        if "@" in host_plantilla or host_plantilla.lower() in ("vc-corporation.com", "www.vc-corporation.com"):
+            host_plantilla = ""
+        if not host_actual or "@" in host_actual or host_actual.lower() in ("vc-corporation.com", "www.vc-corporation.com"):
+            obj.smtp_host = host_plantilla or "mail.vc-corporation.com"
+            if plantilla_cfg and host_plantilla:
+                obj.smtp_puerto = plantilla_cfg.smtp_puerto or 465
+                obj.smtp_tls = plantilla_cfg.smtp_tls
+                obj.smtp_ssl = plantilla_cfg.smtp_ssl
+            else:
+                obj.smtp_puerto = 465
+                obj.smtp_tls = False
+                obj.smtp_ssl = True
+            changed.extend(["smtp_host", "smtp_puerto", "smtp_tls", "smtp_ssl"])
+        if plantilla_cfg and not obj.avisar_solicitante_eventos:
+            obj.avisar_solicitante = plantilla_cfg.avisar_solicitante
+            obj.avisar_solicitante_eventos = list(plantilla_cfg.avisar_solicitante_eventos or [])
+            changed.extend(["avisar_solicitante", "avisar_solicitante_eventos"])
+        if changed:
+            obj.save(update_fields=changed)
         return obj
 
     @property
@@ -229,12 +289,12 @@ class ConfiguracionMesa(models.Model):
     def correo_destino_efectivo(self, usuario=None):
         if (self.correo_destino or "").strip():
             return self.correo_destino.strip()
-        if usuario and getattr(usuario, "correo", None):
-            return usuario.correo.strip()
+        if usuario and correo_de(usuario):
+            return correo_de(usuario)
         from users.models import Usuario
 
         user = Usuario.objects.filter(pk=self.id_usuario).first()
-        return (user.correo or "").strip() if user and user.correo else ""
+        return correo_de(user)
 
     def debe_avisar_solicitante(self, evento):
         if not self.avisar_solicitante:
