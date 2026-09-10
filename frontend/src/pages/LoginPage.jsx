@@ -39,7 +39,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)]">
+    <div className="min-h-screen lg:grid lg:grid-cols-[minmax(0,1.08fr)_minmax(min(100%,420px),0.92fr)]">
       <aside className="relative hidden min-h-screen overflow-hidden bg-brand-charcoal lg:block">
         <img
           src={heroMesa}
@@ -83,7 +83,7 @@ export default function LoginPage() {
         </div>
       </aside>
 
-      <section className="relative flex min-h-screen flex-col items-center justify-center bg-[#F3F7F7] px-6 py-12 lg:block lg:flex-none">
+      <section className="relative flex min-h-screen flex-col items-center justify-center bg-[#F3F7F7] px-4 py-8 sm:px-6 sm:py-12 lg:block lg:flex-none">
         <div className="relative mb-8 h-40 w-full max-w-[420px] overflow-hidden rounded-2xl lg:hidden">
           <img src={heroMesa} alt="" className="h-full w-full object-cover object-top" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#141414] to-transparent" />
@@ -93,7 +93,7 @@ export default function LoginPage() {
         <div className="lg:flex lg:min-h-screen lg:items-center lg:justify-center">
         <form
           onSubmit={onSubmit}
-          className="relative w-full max-w-[420px] rounded-[22px] border border-white bg-white px-8 py-9 shadow-[0_20px_60px_rgba(45,45,45,0.08)]"
+          className="relative w-full max-w-[420px] rounded-[22px] border border-white bg-white px-5 py-7 shadow-[0_20px_60px_rgba(45,45,45,0.08)] sm:px-8 sm:py-9"
         >
           <div className="lg:hidden">
             <BrandLogo variant="form" />

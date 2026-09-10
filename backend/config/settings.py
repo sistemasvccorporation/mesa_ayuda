@@ -119,7 +119,14 @@ if LAN_MODE:
     CORS_ALLOW_ALL_ORIGINS = True
     CSRF_TRUSTED_ORIGINS = [
         *CSRF_TRUSTED_ORIGINS,
+        "https://*.vc-corporation.com",
         "https://*.trycloudflare.com",
+        "https://*.loca.lt",
+        "https://*.ngrok-free.app",
+        "https://*.ngrok.io",
+        "https://*.lhr.life",
+        "https://*.localhost.run",
+        "https://*.serveo.net",
         "http://127.0.0.1:8000",
         "http://localhost:8000",
     ]

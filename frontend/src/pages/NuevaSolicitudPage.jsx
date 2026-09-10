@@ -130,13 +130,13 @@ export default function NuevaSolicitudPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl pb-28">
+    <div className="mx-auto max-w-3xl pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold tracking-tight">Nueva solicitud</h2>
+        <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Nueva solicitud</h2>
         <p className="mt-1 text-sm text-slate-500">Elige el tema, adjunta si hace falta y envía. El estado lo pone el sistema.</p>
       </div>
 
-      <section className="mb-4 rounded-card border border-slate-200 bg-white px-5 py-4">
+      <section className="mb-4 rounded-card border border-slate-200 bg-white px-4 py-4 sm:px-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Solicitante</p>
@@ -182,7 +182,7 @@ export default function NuevaSolicitudPage() {
         )}
       </section>
 
-      <section className="mb-4 rounded-card border border-slate-200 bg-white p-5">
+      <section className="mb-4 rounded-card border border-slate-200 bg-white p-4 sm:p-5">
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <h3 className="text-sm font-semibold">¿Sobre qué es?</h3>
           <span className="text-xs text-slate-400">Un clic</span>
@@ -241,7 +241,7 @@ export default function NuevaSolicitudPage() {
         )}
       </section>
 
-      <section className="mb-4 rounded-card border border-slate-200 bg-white p-5">
+      <section className="mb-4 rounded-card border border-slate-200 bg-white p-4 sm:p-5">
         <h3 className="mb-2 text-sm font-semibold">Prioridad</h3>
         <div className="flex flex-wrap gap-2">
           {PRIORIDADES.map((p) => (
@@ -266,7 +266,7 @@ export default function NuevaSolicitudPage() {
         ) : null}
       </section>
 
-      <section className="mb-4 rounded-card border border-slate-200 bg-white p-5">
+      <section className="mb-4 rounded-card border border-slate-200 bg-white p-4 sm:p-5">
         <h3 className="mb-1 text-sm font-semibold">Qué necesitas</h3>
         <p className="mb-3 text-xs text-slate-400">Opcional si adjuntas el documento o una captura.</p>
         <textarea
@@ -320,9 +320,9 @@ export default function NuevaSolicitudPage() {
         )}
       </section>
 
-      <div className="fixed bottom-0 left-64 right-0 z-10 border-t border-slate-200 bg-white/95 px-8 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-          <button type="button" disabled={saving} onClick={() => submit(false)} className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-brand-charcoal disabled:cursor-not-allowed disabled:opacity-50">
+      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-slate-200 bg-white/95 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:left-64 sm:px-8">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 sm:gap-3">
+          <button type="button" disabled={saving} onClick={() => submit(false)} className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-slate-500 hover:text-brand-charcoal disabled:cursor-not-allowed disabled:opacity-50">
             {savingKind === "draft" ? (
               <>
                 <Loader2 size={14} className="animate-spin" /> Guardando…
@@ -338,7 +338,7 @@ export default function NuevaSolicitudPage() {
               if (saving) return;
               submit(true);
             }}
-            className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-w-0 items-center justify-center gap-2 rounded-lg bg-brand-primary px-3 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
           >
             {savingKind === "send" ? (
               <>

@@ -140,16 +140,16 @@ export default function DetalleSolicitudPage() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-      <div className="space-y-6">
-        <div className="rounded-card border border-slate-200 bg-white p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
+    <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
+      <div className="min-w-0 space-y-6">
+        <div className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-widest text-slate-400">{s.codigo}</p>
-              <h2 className="text-2xl font-bold">{s.categoria_nombre}</h2>
+              <h2 className="text-xl font-bold sm:text-2xl">{s.categoria_nombre}</h2>
               <p className="text-sm text-slate-500">{s.tipo_nombre}</p>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex w-full flex-col items-start gap-2 sm:w-auto sm:items-end">
               <span className="rounded-full px-3 py-1 text-xs font-semibold text-white" style={{ background: s.estado_color }}>
                 {s.estado_nombre}
               </span>
@@ -161,7 +161,7 @@ export default function DetalleSolicitudPage() {
                 type="button"
                 disabled={ocupado}
                 onClick={onDescargarPdf}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {descargandoPdf ? (
                   <>
@@ -197,17 +197,17 @@ export default function DetalleSolicitudPage() {
                 {(s.adjuntos || []).map((a) => (
                   <li
                     key={a.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
+                    className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
                   >
-                    <div>
-                      <div className="font-medium text-brand-charcoal">{a.nombre_original}</div>
+                    <div className="min-w-0">
+                      <div className="break-all font-medium text-brand-charcoal">{a.nombre_original}</div>
                       <div className="text-xs text-slate-500">{tamanoLegible(a.tamano_bytes)}</div>
                     </div>
                     <div className="flex gap-2">
-                      <button type="button" onClick={() => abrirAdjunto(s.id, a, false)} className="rounded-lg bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white">
+                      <button type="button" onClick={() => abrirAdjunto(s.id, a, false)} className="flex-1 rounded-lg bg-brand-primary px-3 py-2 text-xs font-semibold text-white sm:flex-none sm:py-1.5">
                         Ver
                       </button>
-                      <button type="button" onClick={() => abrirAdjunto(s.id, a, true)} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium">
+                      <button type="button" onClick={() => abrirAdjunto(s.id, a, true)} className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium sm:flex-none sm:py-1.5">
                         Descargar
                       </button>
                     </div>
@@ -218,7 +218,7 @@ export default function DetalleSolicitudPage() {
           </div>
         </div>
 
-        <div className="rounded-card border border-slate-200 bg-white p-6">
+        <div className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
           <h3 className="font-semibold">Comentarios</h3>
           <ul className="mt-3 space-y-3">
             {(s.comentarios || []).map((c) => (
@@ -254,7 +254,7 @@ export default function DetalleSolicitudPage() {
                 type="file"
                 multiple
                 accept=".png,.jpg,.jpeg,.pdf"
-                className="mt-2 text-sm"
+                className="mt-2 w-full max-w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs"
                 onChange={(e) => setArchivosComentario(Array.from(e.target.files || []))}
               />
               {archivosComentario.length > 0 && (
@@ -272,7 +272,7 @@ export default function DetalleSolicitudPage() {
                   if (ocupado || !comentario.trim()) return;
                   intentar(() => comentar.mutate());
                 }}
-                className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary px-4 py-2.5 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {comentar.isPending ? (
                   <>
@@ -287,8 +287,8 @@ export default function DetalleSolicitudPage() {
         </div>
       </div>
 
-      <aside className="space-y-6">
-        <div className="rounded-card border border-slate-200 bg-white p-5">
+      <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+        <div className="rounded-card border border-slate-200 bg-white p-4 sm:p-5">
           <h3 className="font-semibold">Acciones</h3>
           <p className="mt-1 text-xs text-slate-500">
             El estado cambia según lo que hagas: tomar, resolver, esperar al usuario o cerrar. No se elige el código a mano.
@@ -334,7 +334,7 @@ export default function DetalleSolicitudPage() {
         </div>
 
         {puedeAsignar && (
-          <div className="rounded-card border border-slate-200 bg-white p-5">
+          <div className="rounded-card border border-slate-200 bg-white p-4 sm:p-5">
             <h3 className="font-semibold">Encargado</h3>
             <p className="mb-3 mt-1 text-xs text-slate-500">Asignar deja el ticket en Asignado. Derivar exige un motivo.</p>
             <UserPicker value={encargado} onChange={setEncargado} />
@@ -400,7 +400,7 @@ export default function DetalleSolicitudPage() {
           </div>
         )}
 
-        <div className="rounded-card border border-slate-200 bg-white p-5">
+        <div className="rounded-card border border-slate-200 bg-white p-4 sm:p-5">
           <h3 className="font-semibold">Historial</h3>
           <ol className="mt-3 space-y-2 text-xs">
             {(s.historial || []).map((h) => (
@@ -449,7 +449,7 @@ function Item({ k, v }) {
   return (
     <div>
       <dt className="text-xs uppercase tracking-wider text-slate-400">{k}</dt>
-      <dd>{v || "—"}</dd>
+      <dd className="break-words">{v || "—"}</dd>
     </div>
   );
 }

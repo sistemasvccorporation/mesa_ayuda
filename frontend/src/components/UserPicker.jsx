@@ -30,7 +30,7 @@ export default function UserPicker({ label, value, onChange, placeholder = "Busc
       <p className="mt-1 text-xs text-slate-500">
         Se listan los usuarios activos de SIGeCom ({data?.count ?? 0}). Puedes filtrar por nombre o usuario.
       </p>
-      <div className="mt-2 max-h-72 overflow-auto rounded-lg border border-slate-200 bg-white">
+      <div className="mt-2 max-h-[min(40vh,18rem)] overflow-auto rounded-lg border border-slate-200 bg-white">
         {isLoading && <p className="px-3 py-4 text-sm text-slate-400">Cargando usuarios…</p>}
         {isError && <p className="px-3 py-4 text-sm text-red-600">No se pudo cargar la lista.</p>}
         {!isLoading && !users.length && <p className="px-3 py-4 text-sm text-slate-400">No hay usuarios activos para mostrar.</p>}
@@ -46,15 +46,15 @@ export default function UserPicker({ label, value, onChange, placeholder = "Busc
               value?.id_usuario === u.id_usuario ? "bg-brand-mint" : ""
             }`}
           >
-            <div className="font-medium">{u.nombre_completo}</div>
-            <div className="text-xs text-slate-500">
+            <div className="truncate font-medium">{u.nombre_completo}</div>
+            <div className="truncate text-xs text-slate-500">
               {u.usuario} · {u.area_nombre || "Sin área"} · {u.rol}
             </div>
           </button>
         ))}
       </div>
       {value && (
-        <div className="mt-2 rounded-lg bg-brand-mint px-3 py-2 text-sm">
+        <div className="mt-2 break-words rounded-lg bg-brand-mint px-3 py-2 text-sm">
           Seleccionado: <strong>{value.nombre_completo}</strong>
         </div>
       )}

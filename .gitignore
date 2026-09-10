@@ -14,5 +14,8 @@ frontend/dev-dist/
 .DS_Store
 Thumbs.db
 tools/cloudflared.exe
+tools/node_modules/
+tools/package-lock.json
+tools/ssh-known-hosts
 .cloudflare-url
 url-red.txt

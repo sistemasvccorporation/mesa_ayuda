@@ -10,6 +10,7 @@
   font-family: Inter, Segoe UI, system-ui, sans-serif;
 }
 
+html,
 body {
   margin: 0;
   min-height: 100vh;
@@ -17,10 +18,36 @@ body {
 
 #root {
   min-height: 100vh;
+  min-width: 0;
+  overflow-x: clip;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   font-family: inherit;
+}
+
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+.Toastify__toast-container {
+  width: min(calc(100vw - 1rem), 360px) !important;
+  padding: 0.5rem;
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+@media (max-width: 639px) {
+  .Toastify__toast-container--top-right {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
 }
 
 @keyframes login-kenburns {

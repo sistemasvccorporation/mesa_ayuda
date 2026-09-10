@@ -14,7 +14,7 @@ export default function BrandLogo({ variant = "sidebar", className = "" }) {
   if (variant === "form") {
     return (
       <div className={`mb-6 ${className}`}>
-        <img src={logoVc} alt={ALT} className="mx-auto h-auto w-[220px] object-contain" />
+        <img src={logoVc} alt={ALT} className="mx-auto h-auto w-[min(220px,70vw)] object-contain" />
       </div>
     );
   }

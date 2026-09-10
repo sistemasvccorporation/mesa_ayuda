@@ -79,13 +79,13 @@ export default function CatalogosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Catálogos</h2>
+        <h2 className="text-xl font-bold sm:text-2xl">Catálogos</h2>
         <p className="text-sm text-slate-500">
           Aquí se configuran las categorías, los tipos de trabajo y el SLA en horas. El SLA se acorta si la prioridad es alta o crítica.
         </p>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-card border border-slate-200 bg-white p-6">
+        <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
           <h3 className="font-semibold">{editCat ? "Editar categoría" : "Nueva categoría"}</h3>
           <div className="mt-3 grid gap-2">
             <input
@@ -133,8 +133,8 @@ export default function CatalogosPage() {
           <ul className="mt-5 space-y-2 text-sm">
             {loadingCat && <li className="text-slate-400">Cargando…</li>}
             {cats.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-2 border-b border-slate-100 py-2">
-                <div>
+              <li key={c.id} className="flex flex-col gap-2 border-b border-slate-100 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                <div className="min-w-0">
                   <div className={c.activo ? "font-medium" : "text-slate-400 line-through"}>{c.nombre}</div>
                   <div className="text-xs text-slate-400">
                     {c.codigo} · SLA {c.sla_horas ? `${c.sla_horas} h` : "sin definir"}
@@ -152,7 +152,7 @@ export default function CatalogosPage() {
             ))}
           </ul>
         </section>
-        <section className="rounded-card border border-slate-200 bg-white p-6">
+        <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
           <h3 className="font-semibold">Tipos de actividad</h3>
           <div className="mt-3 grid gap-2">
             <select
@@ -184,8 +184,8 @@ export default function CatalogosPage() {
           <ul className="mt-5 max-h-[480px] space-y-2 overflow-auto text-sm">
             {loadingTipos && <li className="text-slate-400">Cargando…</li>}
             {tiposFiltrados.map((t) => (
-              <li key={t.id} className="flex items-center justify-between border-b border-slate-100 py-2">
-                <div className={t.activo ? "" : "text-slate-400 line-through"}>
+              <li key={t.id} className="flex flex-col gap-2 border-b border-slate-100 py-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className={t.activo ? "min-w-0" : "min-w-0 text-slate-400 line-through"}>
                   <div>{t.nombre}</div>
                   <div className="text-xs text-slate-400">{t.categoria_nombre}</div>
                 </div>

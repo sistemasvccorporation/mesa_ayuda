@@ -180,13 +180,13 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-2xl bg-brand-charcoal px-6 py-7 text-white shadow-lg shadow-brand-charcoal/10">
+      <section className="relative overflow-hidden rounded-2xl bg-brand-charcoal px-4 py-5 text-white shadow-lg shadow-brand-charcoal/10 sm:px-6 sm:py-7">
         <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-brand-primary/30 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-24 right-24 h-48 w-48 rounded-full bg-brand-secondary/20 blur-2xl" />
         <div className="relative flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-tint">Panel de la mesa</p>
-            <h2 className="mt-1 text-3xl font-extrabold tracking-tight">Hola, {nombre}</h2>
+            <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Hola, {nombre}</h2>
             <p className="mt-2 max-w-xl text-sm text-white/70">
               {totalMesa
                 ? `${totalMesa} solicitud${totalMesa === 1 ? "" : "es"} en ${anio || "todos los años"}. Revisa vencidas y la cola sin asignar primero.`
@@ -213,7 +213,7 @@ export default function DashboardPage() {
             </label>
             <Link
               to="/solicitudes/nueva"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-primary/30 hover:bg-brand-hover"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-primary/30 hover:bg-brand-hover sm:w-auto"
             >
               <Plus size={16} /> Nueva solicitud
             </Link>
@@ -250,7 +250,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)]">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)] sm:p-6">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-start gap-3">
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-amber-50 text-amber-600">
@@ -322,7 +322,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)]">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)] sm:p-6">
           <h3 className="text-lg font-bold">Por categoría</h3>
           <p className="mb-5 text-sm text-slate-500">Distribución de tickets según el tipo de requerimiento.</p>
           {!categorias.length ? (
@@ -350,17 +350,18 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)]">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)] sm:p-6">
         <div className="mb-4">
           <h3 className="text-lg font-bold">Por estado</h3>
           <p className="text-sm text-slate-500">Cómo está la carga de la mesa en este momento.</p>
         </div>
         {porEstado.length ? (
-          <div className="h-72">
+          <div className="h-64 min-w-0 overflow-x-auto sm:h-72">
+            <div className="h-full min-w-[28rem] sm:min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={porEstado} barSize={28}>
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} interval={0} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} width={28} />
                 <Tooltip
                   cursor={{ fill: "rgba(30,140,135,0.06)" }}
                   contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 13 }}
@@ -372,6 +373,7 @@ export default function DashboardPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            </div>
           </div>
         ) : (
           <div className="grid h-56 place-items-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 text-sm text-slate-400">

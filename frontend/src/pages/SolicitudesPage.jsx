@@ -127,8 +127,8 @@ export default function SolicitudesPage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-bold">{titulos[bandeja] || "Solicitudes"}</h2>
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold sm:text-2xl">{titulos[bandeja] || "Solicitudes"}</h2>
           <p className="text-sm text-slate-500">
             {bandeja === "cola" && "Tickets enviados que todavía no tienen encargado."}
             {bandeja === "asignadas" && "Tickets abiertos donde tú eres el encargado."}
@@ -136,7 +136,7 @@ export default function SolicitudesPage() {
             {isFetching && !isLoading ? " · actualizando…" : ""}
           </p>
         </div>
-        <Link to="/solicitudes/nueva" className="rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white">
+        <Link to="/solicitudes/nueva" className="w-full rounded-lg bg-brand-primary px-4 py-2.5 text-center text-sm font-semibold text-white sm:w-auto">
           Nueva solicitud
         </Link>
       </div>
@@ -195,10 +195,10 @@ export default function SolicitudesPage() {
           })}
         </div>
 
-        <div className="flex flex-wrap items-end gap-2">
+        <div className="grid grid-cols-2 items-end gap-2 sm:flex sm:flex-wrap">
           <label className="text-xs font-medium text-slate-500">
             Año
-            <select className="mt-1 block rounded-lg border border-slate-200 px-3 py-1.5 text-sm" value={anio} onChange={(e) => setFiltro("anio", e.target.value)}>
+            <select className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm sm:w-auto" value={anio} onChange={(e) => setFiltro("anio", e.target.value)}>
               <option value="">Todos</option>
               {aniosDisponibles().map((y) => (
                 <option key={y} value={y}>
@@ -209,7 +209,7 @@ export default function SolicitudesPage() {
           </label>
           <label className="text-xs font-medium text-slate-500">
             Mes
-            <select className="mt-1 block rounded-lg border border-slate-200 px-3 py-1.5 text-sm" value={mes} onChange={(e) => setFiltro("mes", e.target.value)}>
+            <select className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm sm:w-auto" value={mes} onChange={(e) => setFiltro("mes", e.target.value)}>
               <option value="">Todos</option>
               {MESES.map((m) => (
                 <option key={m.v} value={m.v}>
@@ -222,7 +222,7 @@ export default function SolicitudesPage() {
             Desde
             <input
               type="date"
-              className="mt-1 block rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+              className="mt-1 block w-full min-w-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm sm:w-auto"
               value={fechaDesde}
               onChange={(e) => setFiltro("fecha_desde", e.target.value)}
             />
@@ -231,14 +231,14 @@ export default function SolicitudesPage() {
             Hasta
             <input
               type="date"
-              className="mt-1 block rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+              className="mt-1 block w-full min-w-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm sm:w-auto"
               value={fechaHasta}
               onChange={(e) => setFiltro("fecha_hasta", e.target.value)}
             />
           </label>
           <label className="text-xs font-medium text-slate-500">
             SLA
-            <select className="mt-1 block rounded-lg border border-slate-200 px-3 py-1.5 text-sm" value={sla} onChange={(e) => setFiltro("sla", e.target.value)}>
+            <select className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm sm:w-auto" value={sla} onChange={(e) => setFiltro("sla", e.target.value)}>
               <option value="">Todos</option>
               <option value="vencido">Vencidos</option>
               <option value="por_vencer">Por vencer</option>
@@ -248,7 +248,7 @@ export default function SolicitudesPage() {
           </label>
           <label className="text-xs font-medium text-slate-500">
             Prioridad
-            <select className="mt-1 block rounded-lg border border-slate-200 px-3 py-1.5 text-sm" value={prioridad} onChange={(e) => setFiltro("prioridad", e.target.value)}>
+            <select className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm sm:w-auto" value={prioridad} onChange={(e) => setFiltro("prioridad", e.target.value)}>
               <option value="">Todas</option>
               <option value="baja">Baja</option>
               <option value="media">Media</option>
@@ -257,71 +257,98 @@ export default function SolicitudesPage() {
             </select>
           </label>
           {hayFiltros && (
-            <button type="button" onClick={limpiarFiltros} className="mb-0.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">
+            <button type="button" onClick={limpiarFiltros} className="col-span-2 mb-0.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 sm:col-auto">
               Limpiar filtros
             </button>
           )}
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-card border border-slate-200 bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Código</th>
-              <th className="px-4 py-3">Fecha</th>
-              <th className="px-4 py-3">Solicitante</th>
-              <th className="px-4 py-3">Categoría</th>
-              <th className="px-4 py-3">Encargado</th>
-              <th className="px-4 py-3">Prioridad</th>
-              <th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3">SLA</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && (
+      <div className="space-y-3 md:hidden">
+        {isLoading && <p className="rounded-card border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-400">Cargando…</p>}
+        {!isLoading && items.length === 0 && (
+          <p className="rounded-card border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-400">No hay solicitudes con esos filtros.</p>
+        )}
+        {items.map((s) => (
+          <Link key={s.id} to={`/solicitudes/${s.id}`} className="block rounded-card border border-slate-200 bg-white p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-semibold">{s.codigo}</div>
+                <div className="text-xs text-slate-500">{s.fecha_registro ? new Date(s.fecha_registro).toLocaleDateString("es-PE") : "—"}</div>
+              </div>
+              <Badge color={s.estado_color}>{s.estado_nombre}</Badge>
+            </div>
+            <p className="mt-2 truncate text-sm font-medium">{s.categoria_nombre}</p>
+            <p className="mt-1 text-xs text-slate-500">Solicitante: {s.solicitante_nombre}</p>
+            <p className="mt-0.5 text-xs text-slate-500">Encargado: {s.asignado_nombre || "Sin asignar"}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+              <span>{PRIORIDAD[s.prioridad] || s.prioridad}</span>
+              <SlaCell estado={s.sla_estado} />
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-card border border-slate-200 bg-white md:block">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[820px] text-left text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
-                  Cargando…
-                </td>
+                <th className="px-4 py-3">Código</th>
+                <th className="px-4 py-3">Fecha</th>
+                <th className="px-4 py-3">Solicitante</th>
+                <th className="px-4 py-3">Categoría</th>
+                <th className="px-4 py-3">Encargado</th>
+                <th className="px-4 py-3">Prioridad</th>
+                <th className="px-4 py-3">Estado</th>
+                <th className="px-4 py-3">SLA</th>
+                <th className="px-4 py-3"></th>
               </tr>
-            )}
-            {!isLoading && items.length === 0 && (
-              <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
-                  No hay solicitudes con esos filtros.
-                </td>
-              </tr>
-            )}
-            {items.map((s) => (
-              <tr key={s.id} className="border-t border-slate-100 hover:bg-slate-50/70">
-                <td className="px-4 py-3 font-semibold">{s.codigo}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-slate-600">
-                  {s.fecha_registro ? new Date(s.fecha_registro).toLocaleDateString("es-PE") : "—"}
-                </td>
-                <td className="px-4 py-3">{s.solicitante_nombre}</td>
-                <td className="px-4 py-3">{s.categoria_nombre}</td>
-                <td className="px-4 py-3">{s.asignado_nombre || "—"}</td>
-                <td className="px-4 py-3">{PRIORIDAD[s.prioridad] || s.prioridad}</td>
-                <td className="px-4 py-3">
-                  <Badge color={s.estado_color}>{s.estado_nombre}</Badge>
-                </td>
-                <td className="px-4 py-3">
-                  <SlaCell estado={s.sla_estado} />
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link to={`/solicitudes/${s.id}`} className="font-medium text-brand-primary">
-                    Abrir
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {isLoading && (
+                <tr>
+                  <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
+                    Cargando…
+                  </td>
+                </tr>
+              )}
+              {!isLoading && items.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
+                    No hay solicitudes con esos filtros.
+                  </td>
+                </tr>
+              )}
+              {items.map((s) => (
+                <tr key={s.id} className="border-t border-slate-100 hover:bg-slate-50/70">
+                  <td className="px-4 py-3 font-semibold">{s.codigo}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-slate-600">
+                    {s.fecha_registro ? new Date(s.fecha_registro).toLocaleDateString("es-PE") : "—"}
+                  </td>
+                  <td className="px-4 py-3">{s.solicitante_nombre}</td>
+                  <td className="px-4 py-3">{s.categoria_nombre}</td>
+                  <td className="px-4 py-3">{s.asignado_nombre || "—"}</td>
+                  <td className="px-4 py-3">{PRIORIDAD[s.prioridad] || s.prioridad}</td>
+                  <td className="px-4 py-3">
+                    <Badge color={s.estado_color}>{s.estado_nombre}</Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <SlaCell estado={s.sla_estado} />
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link to={`/solicitudes/${s.id}`} className="font-medium text-brand-primary">
+                      Abrir
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       {pages > 1 && (
-        <div className="flex justify-end gap-2 text-sm">
+        <div className="flex items-center justify-between gap-2 text-sm sm:justify-end">
           <button
             disabled={page <= 1}
             className="rounded-lg border px-3 py-1 disabled:opacity-40"

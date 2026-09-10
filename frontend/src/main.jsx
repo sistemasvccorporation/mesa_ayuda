@@ -18,7 +18,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <AuthProvider>
           <App />
-          <ToastContainer position="top-right" theme="colored" />
+          <ToastContainer position="top-right" theme="colored" newestOnTop closeOnClick pauseOnFocusLoss={false} />
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

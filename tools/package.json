@@ -1,0 +1,7 @@
+{
+  "name": "sigecom-tunel",
+  "private": true,
+  "dependencies": {
+    "localtunnel": "^2.0.2"
+  }
+}
