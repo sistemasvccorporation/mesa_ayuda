@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { FileText, Image as ImageIcon, Loader2, Paperclip, Send, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Image as ImageIcon, Loader2, Paperclip, Send, X } from "lucide-react";
 import api from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { avisarCorreo } from "../utils/correo.js";
@@ -16,8 +16,60 @@ const PRIORIDADES = [
   { id: "critica", label: "Crítica" },
 ];
 
+const CATS_POR_PAGINA = 9;
+const TIPOS_POR_PAGINA = 8;
+
 function asList(data) {
   return Array.isArray(data) ? data : data?.results || [];
+}
+
+function paginaDe(lista, id, size) {
+  const i = lista.findIndex((item) => String(item.id) === String(id));
+  if (i < 0) return 1;
+  return Math.floor(i / size) + 1;
+}
+
+function MiniPaginacion({ page, pages, onPage, etiqueta }) {
+  if (pages <= 1) return null;
+  return (
+    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs text-slate-400">
+        {etiqueta} · {page} / {pages}
+      </p>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          disabled={page <= 1}
+          className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-35"
+          onClick={() => onPage(page - 1)}
+          aria-label="Anterior"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
+          <button
+            key={n}
+            type="button"
+            className={`min-w-8 rounded-lg px-2 py-1 text-sm font-medium ${
+              n === page ? "bg-brand-primary text-white" : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+            }`}
+            onClick={() => onPage(n)}
+          >
+            {n}
+          </button>
+        ))}
+        <button
+          type="button"
+          disabled={page >= pages}
+          className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-35"
+          onClick={() => onPage(page + 1)}
+          aria-label="Siguiente"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function NuevaSolicitudPage() {
@@ -37,6 +89,8 @@ export default function NuevaSolicitudPage() {
   const [faltantes, setFaltantes] = useState([]);
   const [editarContacto, setEditarContacto] = useState(false);
   const [arrastrando, setArrastrando] = useState(false);
+  const [pagCat, setPagCat] = useState(1);
+  const [pagTipo, setPagTipo] = useState(1);
 
   const { data: categorias } = useQuery({
     queryKey: ["categorias"],
@@ -63,12 +117,29 @@ export default function NuevaSolicitudPage() {
   }, [area, user]);
 
   useEffect(() => {
+    setPagTipo(1);
+  }, [categoria]);
+
+  useEffect(() => {
     if (!categoria) return;
     if (tipoList.length === 1) {
       setTipo(String(tipoList[0].id));
       setFaltantes((f) => f.filter((x) => x !== "tipo"));
     }
   }, [categoria, tipoList]);
+
+  useEffect(() => {
+    if (!categoria) return;
+    setPagCat((p) => {
+      const dest = paginaDe(catList, categoria, CATS_POR_PAGINA);
+      return dest !== p ? dest : p;
+    });
+  }, [categoria, catList]);
+
+  const paginasCat = Math.max(1, Math.ceil(catList.length / CATS_POR_PAGINA));
+  const catsPagina = catList.slice((pagCat - 1) * CATS_POR_PAGINA, pagCat * CATS_POR_PAGINA);
+  const paginasTipo = Math.max(1, Math.ceil(tipoList.length / TIPOS_POR_PAGINA));
+  const tiposPagina = tipoList.slice((pagTipo - 1) * TIPOS_POR_PAGINA, pagTipo * TIPOS_POR_PAGINA);
 
   const listo = Boolean(categoria && tipo && area);
 
@@ -133,15 +204,50 @@ export default function NuevaSolicitudPage() {
     }
   }
 
+  const acciones = (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <button type="button" disabled={saving} onClick={() => submit(false)} className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-slate-500 hover:text-brand-charcoal disabled:cursor-not-allowed disabled:opacity-50">
+        {savingKind === "draft" ? (
+          <>
+            <Loader2 size={14} className="animate-spin" /> Guardando…
+          </>
+        ) : (
+          "Guardar borrador"
+        )}
+      </button>
+      <button
+        type="button"
+        disabled={saving}
+        onClick={() => {
+          if (saving) return;
+          submit(true);
+        }}
+        className="inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg bg-brand-primary px-3 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-5"
+      >
+        {savingKind === "send" ? (
+          <>
+            <Loader2 size={16} className="animate-spin" /> Enviando…
+          </>
+        ) : (
+          <>
+            <Send size={16} /> Enviar solicitud
+          </>
+        )}
+      </button>
+    </div>
+  );
+
   return (
-    <div className="mx-auto max-w-3xl pb-[calc(7rem+env(safe-area-inset-bottom))]">
+    <div className="pb-[calc(6.5rem+env(safe-area-inset-bottom))] xl:pb-2">
       {modalCorreo}
-      <div className="mb-6">
-        <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Nueva solicitud</h2>
-        <p className="mt-1 text-sm text-slate-500">Elige el tema, adjunta si hace falta y envía. El estado lo pone el sistema.</p>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Nueva solicitud</h2>
+          <p className="mt-1 text-sm text-slate-500">Elige el tema a la izquierda. Prioridad, detalle y envío quedan a la derecha.</p>
+        </div>
       </div>
 
-      <section className="mb-4 rounded-card border border-slate-200 bg-white px-4 py-4 sm:px-5">
+      <section className="mb-4 rounded-card border border-slate-200 bg-white px-4 py-3 sm:px-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Solicitante</p>
@@ -187,175 +293,153 @@ export default function NuevaSolicitudPage() {
         )}
       </section>
 
-      <section className="mb-4 rounded-card border border-slate-200 bg-white p-4 sm:p-5">
-        <div className="mb-3 flex items-baseline justify-between gap-2">
-          <h3 className="text-sm font-semibold">¿Sobre qué es?</h3>
-          <span className="text-xs text-slate-400">Un clic</span>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {catList.map((c) => {
-            const activa = String(c.id) === String(categoria);
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => {
-                  setCategoria(String(c.id));
-                  setTipo("");
-                  setFaltantes((f) => f.filter((x) => x !== "categoria"));
-                }}
-                className={`rounded-xl border px-4 py-3 text-left transition ${
-                  activa
-                    ? "border-brand-primary bg-brand-mint shadow-sm ring-1 ring-brand-primary/30"
-                    : faltantes.includes("categoria")
-                      ? "border-red-300 bg-red-50"
-                      : "border-slate-200 bg-white hover:border-brand-secondary hover:bg-brand-mint/50"
-                }`}
-              >
-                <div className="text-sm font-semibold text-brand-charcoal">{c.nombre}</div>
-                {c.sla_horas ? <div className="mt-1 text-xs text-slate-500">Atención objetivo: {c.sla_horas} h</div> : null}
-              </button>
-            );
-          })}
-        </div>
-        {categoria && (
-          <div className="mt-5">
-            <h3 className="mb-2 text-sm font-semibold">Tipo</h3>
-            <div className="flex flex-wrap gap-2">
-              {tipoList.map((t) => {
-                const activa = String(t.id) === String(tipo);
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => {
-                      setTipo(String(t.id));
-                      setFaltantes((f) => f.filter((x) => x !== "tipo"));
-                    }}
-                    className={`rounded-full px-3.5 py-1.5 text-sm transition ${
-                      activa ? "bg-brand-primary font-semibold text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    {t.nombre}
-                  </button>
-                );
-              })}
-              {categoria && !tipoList.length && <p className="text-xs text-slate-400">Cargando tipos…</p>}
-            </div>
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.9fr)]">
+        <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-5">
+          <div className="mb-3 flex items-baseline justify-between gap-2">
+            <h3 className="text-sm font-semibold">¿Sobre qué es?</h3>
+            <span className="text-xs text-slate-400">Un clic</span>
           </div>
-        )}
-      </section>
-
-      <section className="mb-4 rounded-card border border-slate-200 bg-white p-4 sm:p-5">
-        <h3 className="mb-2 text-sm font-semibold">Prioridad</h3>
-        <div className="flex flex-wrap gap-2">
-          {PRIORIDADES.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setPrioridad(p.id)}
-              className={`rounded-full px-3.5 py-1.5 text-sm ${
-                prioridad === p.id ? "bg-brand-charcoal font-semibold text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-        {catActual?.sla_horas ? (
-          <p className="mt-2 text-xs text-slate-500">
-            {prioridad === "critica" || prioridad === "alta"
-              ? "Alta o crítica acorta el plazo de atención."
-              : `Plazo de esta categoría: ${catActual.sla_horas} horas.`}
-          </p>
-        ) : null}
-      </section>
-
-      <section className="mb-4 rounded-card border border-slate-200 bg-white p-4 sm:p-5">
-        <h3 className="mb-1 text-sm font-semibold">Qué necesitas</h3>
-        <p className="mb-3 text-xs text-slate-400">Opcional si adjuntas el documento o una captura.</p>
-        <textarea
-          id="campo-requerimiento"
-          className="min-h-32 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none ring-brand-primary/30 focus:ring-2"
-          value={requerimiento}
-          onChange={(e) => setRequerimiento(e.target.value)}
-          onKeyDown={(e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && listo) submit(true);
-          }}
-          placeholder="Equipo, módulo, síntoma o lo que debe hacer el encargado…"
-        />
-        <div
-          className={`mt-3 rounded-xl border-2 border-dashed px-4 py-6 text-center transition ${
-            arrastrando ? "border-brand-primary bg-brand-mint" : "border-slate-200 bg-slate-50/80"
-          }`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setArrastrando(true);
-          }}
-          onDragLeave={() => setArrastrando(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setArrastrando(false);
-            addFiles(e.dataTransfer.files);
-          }}
-        >
-          <Paperclip className="mx-auto mb-2 text-brand-primary" size={22} />
-          <p className="text-sm font-medium">Suelta archivos aquí o elige</p>
-          <p className="mt-0.5 text-xs text-slate-400">PNG, JPG o PDF · hasta 5</p>
-          <label className="mt-3 inline-block cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-brand-primary ring-1 ring-brand-primary/30">
-            Examinar
-            <input type="file" multiple accept=".png,.jpg,.jpeg,.pdf" className="hidden" onChange={(e) => addFiles(e.target.files)} />
-          </label>
-        </div>
-        {files.length > 0 && (
-          <ul className="mt-3 space-y-2">
-            {files.map((f) => (
-              <li key={f.name + f.size} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
-                <span className="flex min-w-0 items-center gap-2">
-                  {f.type === "application/pdf" ? <FileText size={16} className="shrink-0 text-brand-primary" /> : <ImageIcon size={16} className="shrink-0 text-brand-primary" />}
-                  <span className="truncate">{f.name}</span>
-                  <span className="shrink-0 text-xs text-slate-400">{tamano(f.size)}</span>
-                </span>
-                <button type="button" className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-red-600" onClick={() => setFiles((prev) => prev.filter((x) => x !== f))} aria-label="Quitar">
-                  <X size={16} />
+          <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-3">
+            {catsPagina.map((c) => {
+              const activa = String(c.id) === String(categoria);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    setCategoria(String(c.id));
+                    setTipo("");
+                    setFaltantes((f) => f.filter((x) => x !== "categoria"));
+                  }}
+                  className={`rounded-xl border px-3 py-2.5 text-left transition ${
+                    activa
+                      ? "border-brand-primary bg-brand-mint shadow-sm ring-1 ring-brand-primary/30"
+                      : faltantes.includes("categoria")
+                        ? "border-red-300 bg-red-50"
+                        : "border-slate-200 bg-white hover:border-brand-secondary hover:bg-brand-mint/50"
+                  }`}
+                >
+                  <div className="text-sm font-semibold text-brand-charcoal">{c.nombre}</div>
+                  {c.sla_horas ? <div className="mt-1 text-xs text-slate-500">Atención objetivo: {c.sla_horas} h</div> : null}
                 </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+              );
+            })}
+          </div>
+          <MiniPaginacion page={pagCat} pages={paginasCat} onPage={setPagCat} etiqueta="Categorías" />
+          {categoria && (
+            <div className="mt-5">
+              <h3 className="mb-2 text-sm font-semibold">Tipo</h3>
+              <div className="flex flex-wrap gap-2">
+                {tiposPagina.map((t) => {
+                  const activa = String(t.id) === String(tipo);
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        setTipo(String(t.id));
+                        setFaltantes((f) => f.filter((x) => x !== "tipo"));
+                      }}
+                      className={`rounded-full px-3.5 py-1.5 text-sm transition ${
+                        activa ? "bg-brand-primary font-semibold text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      }`}
+                    >
+                      {t.nombre}
+                    </button>
+                  );
+                })}
+                {categoria && !tipoList.length && <p className="text-xs text-slate-400">Cargando tipos…</p>}
+              </div>
+              <MiniPaginacion page={pagTipo} pages={paginasTipo} onPage={setPagTipo} etiqueta="Tipos" />
+            </div>
+          )}
+        </section>
 
-      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-slate-200 bg-white/95 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:left-64 sm:px-8">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 sm:gap-3">
-          <button type="button" disabled={saving} onClick={() => submit(false)} className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-slate-500 hover:text-brand-charcoal disabled:cursor-not-allowed disabled:opacity-50">
-            {savingKind === "draft" ? (
-              <>
-                <Loader2 size={14} className="animate-spin" /> Guardando…
-              </>
-            ) : (
-              "Guardar borrador"
+        <div className="space-y-4 xl:sticky xl:top-24">
+          <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-5">
+            <h3 className="mb-2 text-sm font-semibold">Prioridad</h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-2">
+              {PRIORIDADES.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPrioridad(p.id)}
+                  className={`rounded-lg px-3 py-2 text-sm ${
+                    prioridad === p.id ? "bg-brand-charcoal font-semibold text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            {catActual?.sla_horas ? (
+              <p className="mt-2 text-xs text-slate-500">
+                {prioridad === "critica" || prioridad === "alta"
+                  ? "Alta o crítica acorta el plazo de atención."
+                  : `Plazo de esta categoría: ${catActual.sla_horas} horas.`}
+              </p>
+            ) : null}
+          </section>
+
+          <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-5">
+            <h3 className="mb-1 text-sm font-semibold">Qué necesitas</h3>
+            <p className="mb-3 text-xs text-slate-400">Opcional si adjuntas el documento o una captura.</p>
+            <textarea
+              id="campo-requerimiento"
+              className="min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none ring-brand-primary/30 focus:ring-2 xl:min-h-28"
+              value={requerimiento}
+              onChange={(e) => setRequerimiento(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && listo) submit(true);
+              }}
+              placeholder="Equipo, módulo, síntoma o lo que debe hacer el encargado…"
+            />
+            <div
+              className={`mt-3 rounded-xl border-2 border-dashed px-3 py-4 text-center transition ${
+                arrastrando ? "border-brand-primary bg-brand-mint" : "border-slate-200 bg-slate-50/80"
+              }`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setArrastrando(true);
+              }}
+              onDragLeave={() => setArrastrando(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setArrastrando(false);
+                addFiles(e.dataTransfer.files);
+              }}
+            >
+              <Paperclip className="mx-auto mb-1.5 text-brand-primary" size={20} />
+              <p className="text-sm font-medium">Suelta archivos o elige</p>
+              <p className="mt-0.5 text-xs text-slate-400">PNG, JPG o PDF · hasta 5</p>
+              <label className="mt-2 inline-block cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-brand-primary ring-1 ring-brand-primary/30">
+                Examinar
+                <input type="file" multiple accept=".png,.jpg,.jpeg,.pdf" className="hidden" onChange={(e) => addFiles(e.target.files)} />
+              </label>
+            </div>
+            {files.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {files.map((f) => (
+                  <li key={f.name + f.size} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
+                    <span className="flex min-w-0 items-center gap-2">
+                      {f.type === "application/pdf" ? <FileText size={16} className="shrink-0 text-brand-primary" /> : <ImageIcon size={16} className="shrink-0 text-brand-primary" />}
+                      <span className="truncate">{f.name}</span>
+                      <span className="shrink-0 text-xs text-slate-400">{tamano(f.size)}</span>
+                    </span>
+                    <button type="button" className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-red-600" onClick={() => setFiles((prev) => prev.filter((x) => x !== f))} aria-label="Quitar">
+                      <X size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
-          </button>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => {
-              if (saving) return;
-              submit(true);
-            }}
-            className="inline-flex min-w-0 items-center justify-center gap-2 rounded-lg bg-brand-primary px-3 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
-          >
-            {savingKind === "send" ? (
-              <>
-                <Loader2 size={16} className="animate-spin" /> Enviando…
-              </>
-            ) : (
-              <>
-                <Send size={16} /> Enviar solicitud
-              </>
-            )}
-          </button>
+            <div className="mt-4 hidden border-t border-slate-100 pt-4 xl:block">{acciones}</div>
+          </section>
         </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-slate-200 bg-white/95 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur xl:hidden sm:px-8">
+        {acciones}
       </div>
     </div>
   );

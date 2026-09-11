@@ -120,7 +120,7 @@ export default function PerfilPage() {
   const rolEtiqueta = { admin: "Administrador", tecnico: "Encargado", solicitante: "Solicitante" }[user?.rol] || user?.rol;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-4">
       <section className="overflow-hidden rounded-2xl bg-brand-charcoal px-4 py-5 text-white sm:px-6 sm:py-6">
         <div className="flex flex-wrap items-center gap-4">
           <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-primary text-lg font-bold">
@@ -136,7 +136,8 @@ export default function PerfilPage() {
         </div>
       </section>
 
-      <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
+      <div className="grid items-start gap-4 xl:grid-cols-2">
+      <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6 xl:sticky xl:top-24">
         <div className="mb-4 flex items-center gap-2">
           <UserRound size={18} className="text-brand-primary" />
           <h3 className="font-semibold">Datos de la cuenta</h3>
@@ -225,6 +226,7 @@ export default function PerfilPage() {
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 }

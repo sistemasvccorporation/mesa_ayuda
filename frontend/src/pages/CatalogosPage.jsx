@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { ChevronDown } from "lucide-react";
 import api from "../api/client.js";
+import Modal from "../components/Modal.jsx";
 
 function listOf(data) {
   return Array.isArray(data) ? data : data?.results || [];
@@ -24,6 +26,7 @@ export default function CatalogosPage() {
   const [catForm, setCatForm] = useState({ nombre: "", codigo: "", sla_horas: 24, descripcion: "" });
   const [tipoForm, setTipoForm] = useState({ nombre: "", categoria: "", codigo: "" });
   const [editCat, setEditCat] = useState(null);
+  const [abrirCats, setAbrirCats] = useState(false);
 
   const saveCat = useMutation({
     mutationFn: (payload) =>
@@ -61,6 +64,8 @@ export default function CatalogosPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tipos-admin"] }),
   });
 
+  const catsActivas = useMemo(() => cats.filter((c) => c.activo), [cats]);
+  const catElegida = catsActivas.find((c) => String(c.id) === String(tipoForm.categoria));
   const tiposFiltrados = useMemo(() => {
     if (!tipoForm.categoria) return tps;
     return tps.filter((t) => String(t.categoria) === String(tipoForm.categoria));
@@ -84,8 +89,8 @@ export default function CatalogosPage() {
           Aquí se configuran las categorías, los tipos de trabajo y el SLA en horas. El SLA se acorta si la prioridad es alta o crítica.
         </p>
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+        <section className="min-w-0 rounded-card border border-slate-200 bg-white p-4 sm:p-6">
           <h3 className="font-semibold">{editCat ? "Editar categoría" : "Nueva categoría"}</h3>
           <div className="mt-3 grid gap-2">
             <input
@@ -152,23 +157,21 @@ export default function CatalogosPage() {
             ))}
           </ul>
         </section>
-        <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
+        <section className="min-w-0 rounded-card border border-slate-200 bg-white p-4 sm:p-6">
           <h3 className="font-semibold">Tipos de actividad</h3>
-          <div className="mt-3 grid gap-2">
-            <select
-              className="rounded-lg border px-3 py-2 text-sm"
-              value={tipoForm.categoria}
-              onChange={(e) => setTipoForm({ ...tipoForm, categoria: e.target.value })}
+          <div className="mt-3 grid min-w-0 gap-2">
+            <button
+              type="button"
+              onClick={() => setAbrirCats(true)}
+              className="flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-left text-sm"
             >
-              <option value="">Categoría del tipo</option>
-              {cats.filter((c) => c.activo).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre}
-                </option>
-              ))}
-            </select>
+              <span className={`min-w-0 truncate ${catElegida ? "text-brand-charcoal" : "text-slate-400"}`}>
+                {catElegida?.nombre || "Categoría del tipo"}
+              </span>
+              <ChevronDown size={16} className="shrink-0 text-slate-400" />
+            </button>
             <input
-              className="rounded-lg border px-3 py-2 text-sm"
+              className="min-w-0 rounded-lg border px-3 py-2 text-sm"
               placeholder="Nombre del tipo (ej. Accesos)"
               value={tipoForm.nombre}
               onChange={(e) => setTipoForm({ ...tipoForm, nombre: e.target.value })}
@@ -181,15 +184,15 @@ export default function CatalogosPage() {
               Agregar tipo
             </button>
           </div>
-          <ul className="mt-5 max-h-[480px] space-y-2 overflow-auto text-sm">
+          <ul className="mt-5 max-h-[min(24rem,50vh)] space-y-2 overflow-auto text-sm">
             {loadingTipos && <li className="text-slate-400">Cargando…</li>}
             {tiposFiltrados.map((t) => (
               <li key={t.id} className="flex flex-col gap-2 border-b border-slate-100 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className={t.activo ? "min-w-0" : "min-w-0 text-slate-400 line-through"}>
-                  <div>{t.nombre}</div>
-                  <div className="text-xs text-slate-400">{t.categoria_nombre}</div>
+                  <div className="break-words">{t.nombre}</div>
+                  <div className="break-words text-xs text-slate-400">{t.categoria_nombre}</div>
                 </div>
-                <button className="text-xs text-slate-500" onClick={() => toggleTipo.mutate(t)}>
+                <button className="self-start text-xs text-slate-500 sm:self-auto" onClick={() => toggleTipo.mutate(t)}>
                   {t.activo ? "Desactivar" : "Activar"}
                 </button>
               </li>
@@ -197,6 +200,49 @@ export default function CatalogosPage() {
           </ul>
         </section>
       </div>
+
+      <Modal
+        open={abrirCats}
+        onClose={() => setAbrirCats(false)}
+        title="Categoría del tipo"
+        footer={
+          tipoForm.categoria ? (
+            <button
+              type="button"
+              className="w-full rounded-lg border border-slate-200 py-2.5 text-sm text-slate-600"
+              onClick={() => {
+                setTipoForm({ ...tipoForm, categoria: "" });
+                setAbrirCats(false);
+              }}
+            >
+              Quitar filtro
+            </button>
+          ) : null
+        }
+      >
+        <ul className="space-y-1">
+          {catsActivas.map((c) => {
+            const activa = String(c.id) === String(tipoForm.categoria);
+            return (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  className={`w-full rounded-lg px-3 py-3 text-left text-sm ${
+                    activa ? "bg-brand-mint font-semibold text-brand-primary" : "hover:bg-slate-50"
+                  }`}
+                  onClick={() => {
+                    setTipoForm({ ...tipoForm, categoria: String(c.id) });
+                    setAbrirCats(false);
+                  }}
+                >
+                  <span className="block break-words">{c.nombre}</span>
+                </button>
+              </li>
+            );
+          })}
+          {!catsActivas.length && <li className="px-1 py-4 text-center text-sm text-slate-400">No hay categorías activas.</li>}
+        </ul>
+      </Modal>
     </div>
   );
 }

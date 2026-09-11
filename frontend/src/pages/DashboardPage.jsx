@@ -195,11 +195,11 @@ export default function DashboardPage() {
                   : "Cuando registres una solicitud, aquí verás su avance."}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium text-white/80">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <label className="flex min-w-0 flex-1 items-center rounded-xl bg-white/10 px-3 py-2 text-xs font-medium text-white/80 sm:flex-none">
               Año
               <select
-                className="ml-2 rounded-lg border-0 bg-white/15 px-2 py-1 text-sm text-white outline-none"
+                className="ml-2 min-w-0 flex-1 rounded-lg border-0 bg-white/15 px-2 py-1 text-sm text-white outline-none sm:flex-none"
                 value={anio}
                 onChange={(e) => setAnio(e.target.value)}
               >
@@ -233,18 +233,18 @@ export default function DashboardPage() {
             <Link
               key={item.key}
               to={enlaceKpi(item.to, anio)}
-              className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)] transition hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-[0_16px_30px_-18px_rgba(30,140,135,0.45)]"
+              className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)] transition hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-[0_16px_30px_-18px_rgba(30,140,135,0.45)] sm:p-4"
             >
               <span className={`absolute inset-y-0 left-0 w-1 ${tone.bar}`} />
-              <div className="flex items-start justify-between gap-3 pl-2">
-                <div className={`grid h-10 w-10 place-items-center rounded-xl ${tone.icon}`}>
+              <div className="flex items-start justify-between gap-2 pl-2">
+                <div className={`grid h-9 w-9 place-items-center rounded-xl ${tone.icon} sm:h-10 sm:w-10`}>
                   <Icon size={18} />
                 </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-primary">
+                <span className="hidden text-[10px] font-semibold uppercase tracking-wider text-brand-primary sm:inline">
                   Ver listado
                 </span>
               </div>
-              <div className={`mt-4 pl-2 text-3xl font-extrabold tracking-tight ${tone.value}`}>{value}</div>
+              <div className={`mt-3 pl-2 text-2xl font-extrabold tracking-tight sm:mt-4 sm:text-3xl ${tone.value}`}>{value}</div>
               <div className="mt-1 pl-2 text-sm font-semibold text-brand-charcoal">{item.label}</div>
               <div className="pl-2 text-xs text-slate-500">{hint}</div>
             </Link>
@@ -270,17 +270,17 @@ export default function DashboardPage() {
               </div>
             </div>
             {isAdmin && (
-              <div className="flex gap-2">
+              <div className="flex w-full gap-2 sm:w-auto">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 sm:flex-none sm:py-1.5"
                   onClick={() => downloadReport("/reportes/solicitudes.xlsx", "reporte_mesa_ayuda.xlsx", params)}
                 >
                   <FileSpreadsheet size={14} /> Excel
                 </button>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 sm:flex-none sm:py-1.5"
                   onClick={() => downloadReport("/reportes/solicitudes.pdf", "reporte_mesa_ayuda.pdf", params)}
                 >
                   <Download size={14} /> PDF
@@ -301,20 +301,20 @@ export default function DashboardPage() {
               {ranking.map((row) => (
                 <li
                   key={`${row.usuario}-${row.puesto}`}
-                  className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5"
+                  className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/60 px-2.5 py-2 sm:gap-3 sm:px-3 sm:py-2.5"
                 >
-                  <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold ${medalla(row.puesto)}`}>
+                  <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold sm:h-8 sm:w-8 ${medalla(row.puesto)}`}>
                     {row.puesto}
                   </span>
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-primary/10 text-[11px] font-bold text-brand-primary">
+                  <span className="hidden h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-primary/10 text-[11px] font-bold text-brand-primary sm:grid">
                     {iniciales(row.nombre)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <div className="truncate font-semibold">{row.nombre}</div>
-                      <div className="text-sm font-bold text-brand-primary">{row.total}</div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <div className="min-w-0 truncate text-sm font-semibold sm:text-base">{row.nombre}</div>
+                      <div className="shrink-0 text-sm font-bold text-brand-primary">{row.total}</div>
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="truncate text-xs text-slate-500">
                       {row.usuario} · {row.area}
                     </div>
                     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white">
@@ -342,9 +342,9 @@ export default function DashboardPage() {
             <ul className="space-y-4">
               {categorias.map((row) => (
                 <li key={row.categoria__nombre}>
-                  <div className="mb-1.5 flex items-center justify-between text-sm">
-                    <span className="font-medium">{row.categoria__nombre}</span>
-                    <span className="tabular-nums font-bold text-brand-primary">{row.total}</span>
+                  <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+                    <span className="min-w-0 truncate font-medium">{row.categoria__nombre}</span>
+                    <span className="shrink-0 tabular-nums font-bold text-brand-primary">{row.total}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                     <div
@@ -367,25 +367,47 @@ export default function DashboardPage() {
           </p>
         </div>
         {porEstado.length ? (
-          <div className="h-64 min-w-0 overflow-x-auto sm:h-72">
-            <div className="h-full min-w-[28rem] sm:min-w-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={porEstado} barSize={28}>
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} interval={0} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} width={28} />
-                <Tooltip
-                  cursor={{ fill: "rgba(30,140,135,0.06)" }}
-                  contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 13 }}
-                />
-                <Bar dataKey="total" radius={[8, 8, 4, 4]}>
-                  {porEstado.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color || "#1E8C87"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <>
+            <ul className="space-y-3 sm:hidden">
+              {porEstado.map((row) => (
+                <li key={row.name}>
+                  <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+                    <span className="flex min-w-0 items-center gap-2 font-medium">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: row.color || "#1E8C87" }} />
+                      <span className="truncate">{row.name}</span>
+                    </span>
+                    <span className="shrink-0 tabular-nums font-bold text-brand-primary">{row.total}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.max(6, (row.total / Math.max(1, ...porEstado.map((e) => e.total))) * 100)}%`,
+                        background: row.color || "#1E8C87",
+                      }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden h-72 min-w-0 sm:block">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={porEstado} barSize={28} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} interval={0} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} width={28} />
+                  <Tooltip
+                    cursor={{ fill: "rgba(30,140,135,0.06)" }}
+                    contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 13 }}
+                  />
+                  <Bar dataKey="total" radius={[8, 8, 4, 4]}>
+                    {porEstado.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color || "#1E8C87"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
-          </div>
+          </>
         ) : (
           <div className="grid h-56 place-items-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 text-sm text-slate-400">
             El gráfico aparecerá cuando haya solicitudes.

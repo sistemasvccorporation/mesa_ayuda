@@ -159,7 +159,7 @@ export default function ConfiguracionPage() {
   if (isLoading) return <p>Cargando…</p>;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-4">
       <div>
         <h2 className="text-xl font-bold sm:text-2xl">Configuración de correo</h2>
         <p className="mt-1 text-sm text-slate-500">
@@ -177,135 +177,135 @@ export default function ConfiguracionPage() {
         </div>
       )}
 
-      <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-semibold">Bandeja de la mesa</h3>
-          <button type="button" className="text-xs font-medium text-brand-primary hover:underline" onClick={usarMiCorreo}>
-            Usar mi correo SIGeCom{user?.correo ? ` (${user.correo})` : ""}
-          </button>
-        </div>
-        <label className="block text-sm font-medium">
-          Correo donde llegan las solicitudes
-          <input
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            type="email"
-            value={form.correo_destino}
-            onChange={(e) => set("correo_destino", e.target.value)}
-            placeholder="tu.correo@vc-corporation.com"
-          />
-        </label>
-        <p className="mt-2 text-xs text-slate-500">
-          Llegan a <strong>tu</strong> bandeja. El correo de otro admin no se mezcla con el tuyo.
-        </p>
-      </section>
-
-      <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-          <div className="min-w-0">
-            <h3 className="font-semibold">Avisos al usuario de la solicitud</h3>
-            <p className="mt-1 text-sm text-slate-500">
-              El correo llega al contacto de cada ticket (el que el usuario indicó al registrarla, o el de su cuenta SIGeCom).
-            </p>
-          </div>
-          <label className="flex shrink-0 items-center gap-2 self-start text-sm font-medium">
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-brand-primary"
-              checked={form.avisar_solicitante}
-              onChange={(e) => set("avisar_solicitante", e.target.checked)}
-            />
-            Activado
-          </label>
-        </div>
-        <div className={`space-y-2 ${form.avisar_solicitante ? "" : "pointer-events-none opacity-50"}`}>
-          {EVENTOS_USUARIO.map((ev) => (
-            <label key={ev.id} className="flex items-start gap-3 rounded-lg border border-slate-100 px-3 py-2 text-sm hover:bg-slate-50">
+      <div className="grid items-start gap-4 xl:grid-cols-2">
+        <div className="space-y-4">
+          <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-semibold">Bandeja de la mesa</h3>
+              <button type="button" className="text-xs font-medium text-brand-primary hover:underline" onClick={usarMiCorreo}>
+                Usar mi correo SIGeCom{user?.correo ? ` (${user.correo})` : ""}
+              </button>
+            </div>
+            <label className="block text-sm font-medium">
+              Correo donde llegan las solicitudes
               <input
-                type="checkbox"
-                className="mt-0.5 accent-brand-primary"
-                checked={form.avisar_solicitante_eventos.includes(ev.id)}
-                onChange={() => toggleEvento(ev.id)}
+                className="mt-1 w-full rounded-lg border px-3 py-2"
+                type="email"
+                value={form.correo_destino}
+                onChange={(e) => set("correo_destino", e.target.value)}
+                placeholder="tu.correo@vc-corporation.com"
               />
-              <span>{ev.label}</span>
             </label>
-          ))}
-        </div>
-      </section>
+            <p className="mt-2 text-xs text-slate-500">
+              Llegan a <strong>tu</strong> bandeja. El correo de otro admin no se mezcla con el tuyo.
+            </p>
+          </section>
 
-      <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-semibold">Servidor de envío (SMTP)</h3>
-          <div className="flex flex-wrap gap-2 text-xs">
-            <button type="button" className="rounded-full bg-brand-primary px-3 py-1 font-medium text-white" onClick={presetCpanel}>
-              cPanel V&C
+          <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <div className="min-w-0">
+                <h3 className="font-semibold">Avisos al usuario de la solicitud</h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  El correo llega al contacto de cada ticket (el que el usuario indicó al registrarla, o el de su cuenta SIGeCom).
+                </p>
+              </div>
+              <label className="flex shrink-0 items-center gap-2 self-start text-sm font-medium">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-brand-primary"
+                  checked={form.avisar_solicitante}
+                  onChange={(e) => set("avisar_solicitante", e.target.checked)}
+                />
+                Activado
+              </label>
+            </div>
+            <div className={`grid gap-2 sm:grid-cols-2 ${form.avisar_solicitante ? "" : "pointer-events-none opacity-50"}`}>
+              {EVENTOS_USUARIO.map((ev) => (
+                <label key={ev.id} className="flex items-start gap-3 rounded-lg border border-slate-100 px-3 py-2 text-sm hover:bg-slate-50">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 accent-brand-primary"
+                    checked={form.avisar_solicitante_eventos.includes(ev.id)}
+                    onChange={() => toggleEvento(ev.id)}
+                  />
+                  <span>{ev.label}</span>
+                </label>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <div className="space-y-4 xl:sticky xl:top-24">
+          <section className="rounded-card border border-slate-200 bg-white p-4 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-semibold">Servidor de envío (SMTP)</h3>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <button type="button" className="rounded-full bg-brand-primary px-3 py-1 font-medium text-white" onClick={presetCpanel}>
+                  cPanel V&C
+                </button>
+                <button type="button" className="rounded-full bg-slate-100 px-3 py-1 font-medium" onClick={presetOffice}>
+                  Office 365
+                </button>
+                <button type="button" className="rounded-full bg-slate-100 px-3 py-1 font-medium" onClick={presetGmail}>
+                  Gmail
+                </button>
+              </div>
+            </div>
+            <p className="mb-4 text-xs text-slate-500">
+              El correo corporativo de V&C sale por cPanel. Servidor: <strong>mail.vc-corporation.com</strong>, puerto{" "}
+              <strong>465</strong> con SSL. Usuario y remitente: el correo completo de ese admin (ej. ronaldo.roman@vc-corporation.com).
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-sm font-medium sm:col-span-2">
+                Servidor
+                <input className="mt-1 w-full rounded-lg border px-3 py-2" value={form.smtp_host} onChange={(e) => set("smtp_host", e.target.value)} placeholder="mail.vc-corporation.com" />
+              </label>
+              <label className="text-sm font-medium">
+                Puerto
+                <input className="mt-1 w-full rounded-lg border px-3 py-2" type="number" value={form.smtp_puerto} onChange={(e) => set("smtp_puerto", Number(e.target.value) || 587)} />
+              </label>
+              <label className="flex items-end gap-4 pb-2 text-sm">
+                <span className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.smtp_tls} onChange={(e) => set("smtp_tls", e.target.checked)} /> TLS
+                </span>
+                <span className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.smtp_ssl} onChange={(e) => set("smtp_ssl", e.target.checked)} /> SSL
+                </span>
+              </label>
+              <label className="text-sm font-medium sm:col-span-2">
+                Usuario SMTP (normalmente tu correo)
+                <input className="mt-1 w-full rounded-lg border px-3 py-2" value={form.smtp_usuario} onChange={(e) => set("smtp_usuario", e.target.value)} placeholder={user?.correo || ""} />
+              </label>
+              <label className="text-sm font-medium sm:col-span-2">
+                Contraseña o contraseña de aplicación
+                <input
+                  className="mt-1 w-full rounded-lg border px-3 py-2"
+                  type="password"
+                  autoComplete="new-password"
+                  value={form.smtp_clave}
+                  onChange={(e) => set("smtp_clave", e.target.value)}
+                  placeholder={data?.smtp_clave_configurada ? "••••••••  (deja vacío para no cambiarla)" : "Clave del buzón en cPanel / webmail"}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Es la contraseña de esa cuenta de correo en cPanel (webmail), no la de SIGeCom. Si antes usabas Office 365, escríbela de nuevo y guarda.
+                </p>
+              </label>
+              <label className="text-sm font-medium sm:col-span-2">
+                Remitente (From)
+                <input className="mt-1 w-full rounded-lg border px-3 py-2" type="email" value={form.correo_remitente} onChange={(e) => set("correo_remitente", e.target.value)} placeholder="El mismo correo corporativo" />
+              </label>
+            </div>
+          </section>
+
+          <div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
+            <button type="button" disabled={probar.isPending || guardar.isPending} onClick={() => probar.mutate()} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+              {probar.isPending ? "Enviando…" : "Enviar correo de prueba"}
             </button>
-            <button type="button" className="rounded-full bg-slate-100 px-3 py-1 font-medium" onClick={presetOffice}>
-              Office 365
-            </button>
-            <button type="button" className="rounded-full bg-slate-100 px-3 py-1 font-medium" onClick={presetGmail}>
-              Gmail
+            <button type="button" disabled={guardar.isPending || probar.isPending} onClick={onSave} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+              {guardar.isPending ? "Guardando…" : "Guardar configuración"}
             </button>
           </div>
         </div>
-        <p className="mb-4 text-xs text-slate-500">
-          El correo corporativo de V&C sale por cPanel. Servidor: <strong>mail.vc-corporation.com</strong>, puerto{" "}
-          <strong>465</strong> con SSL. Usuario y remitente: el correo completo de ese admin (ej. ronaldo.roman@vc-corporation.com).
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm font-medium sm:col-span-2">
-            Servidor
-            <input className="mt-1 w-full rounded-lg border px-3 py-2" value={form.smtp_host} onChange={(e) => set("smtp_host", e.target.value)} placeholder="mail.vc-corporation.com" />
-          </label>
-          <label className="text-sm font-medium">
-            Puerto
-            <input className="mt-1 w-full rounded-lg border px-3 py-2" type="number" value={form.smtp_puerto} onChange={(e) => set("smtp_puerto", Number(e.target.value) || 587)} />
-          </label>
-          <label className="flex items-end gap-4 pb-2 text-sm">
-            <span className="flex items-center gap-2">
-              <input type="checkbox" checked={form.smtp_tls} onChange={(e) => set("smtp_tls", e.target.checked)} /> TLS
-            </span>
-            <span className="flex items-center gap-2">
-              <input type="checkbox" checked={form.smtp_ssl} onChange={(e) => set("smtp_ssl", e.target.checked)} /> SSL
-            </span>
-          </label>
-          <label className="text-sm font-medium sm:col-span-2">
-            Usuario SMTP (normalmente tu correo)
-            <input className="mt-1 w-full rounded-lg border px-3 py-2" value={form.smtp_usuario} onChange={(e) => set("smtp_usuario", e.target.value)} placeholder={user?.correo || ""} />
-          </label>
-          <label className="text-sm font-medium sm:col-span-2">
-            Contraseña o contraseña de aplicación
-            <input
-              className="mt-1 w-full rounded-lg border px-3 py-2"
-              type="password"
-              autoComplete="new-password"
-              value={form.smtp_clave}
-              onChange={(e) => set("smtp_clave", e.target.value)}
-              placeholder={data?.smtp_clave_configurada ? "••••••••  (deja vacío para no cambiarla)" : "Clave del buzón en cPanel / webmail"}
-            />
-            <p className="mt-1 text-xs text-slate-500">
-              Es la contraseña de esa cuenta de correo en cPanel (webmail), no la de SIGeCom. Si antes usabas Office 365, escríbela de nuevo y guarda.
-            </p>
-          </label>
-          <label className="text-sm font-medium sm:col-span-2">
-            Remitente (From)
-            <input className="mt-1 w-full rounded-lg border px-3 py-2" type="email" value={form.correo_remitente} onChange={(e) => set("correo_remitente", e.target.value)} placeholder="El mismo correo corporativo" />
-          </label>
-        </div>
-      </section>
-
-      <div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
-        <button type="button" disabled={probar.isPending || guardar.isPending} onClick={() => probar.mutate()} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
-          {probar.isPending ? (
-            <>
-              Enviando…
-            </>
-          ) : (
-            "Enviar correo de prueba"
-          )}
-        </button>
-        <button type="button" disabled={guardar.isPending || probar.isPending} onClick={onSave} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
-          {guardar.isPending ? "Guardando…" : "Guardar configuración"}
-        </button>
       </div>
     </div>
   );
