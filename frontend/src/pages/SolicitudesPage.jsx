@@ -3,6 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
 import api from "../api/client.js";
+import Paginacion from "../components/Paginacion.jsx";
+import { useAuth } from "../auth/AuthContext.jsx";
 
 const PRIORIDAD = { baja: "Baja", media: "Media", alta: "Alta", critica: "Crítica" };
 const MESES = [
@@ -44,6 +46,7 @@ function SlaCell({ estado }) {
 }
 
 export default function SolicitudesPage() {
+  const { isTecnico } = useAuth();
   const [params, setParams] = useSearchParams();
   const q = params.get("q") || "";
   const estado = params.get("estado") || "";
@@ -55,6 +58,7 @@ export default function SolicitudesPage() {
   const fechaHasta = params.get("fecha_hasta") || "";
   const prioridad = params.get("prioridad") || "";
   const page = Number(params.get("page") || 1);
+  const pageSize = Number(params.get("page_size") || 10);
   const [qInput, setQInput] = useState(q);
 
   useEffect(() => {
@@ -83,9 +87,9 @@ export default function SolicitudesPage() {
       fecha_hasta: fechaHasta || undefined,
       prioridad: prioridad || undefined,
       page,
-      page_size: 50,
+      page_size: pageSize,
     }),
-    [q, estado, sla, bandeja, anio, mes, fechaDesde, fechaHasta, prioridad, page]
+    [q, estado, sla, bandeja, anio, mes, fechaDesde, fechaHasta, prioridad, page, pageSize]
   );
 
   const { data: estadosData } = useQuery({
@@ -101,27 +105,38 @@ export default function SolicitudesPage() {
   const estados = Array.isArray(estadosData) ? estadosData : estadosData?.results || [];
   const items = data?.results || (Array.isArray(data) ? data : []);
   const count = data?.count ?? items.length;
-  const pages = Math.max(1, Math.ceil(count / 50));
+  const pages = Math.max(1, Math.ceil(count / pageSize) || 1);
 
   function setFiltro(key, value) {
     const next = new URLSearchParams(params);
     if (key !== "page") next.delete("page");
+    if (key === "bandeja") next.delete("estado");
+    if (key === "estado") next.delete("bandeja");
     if (value) next.set(key, value);
     else next.delete(key);
     setParams(next, { replace: true });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function limpiarFiltros() {
-    const next = new URLSearchParams();
-    if (bandeja) next.set("bandeja", bandeja);
     setQInput("");
-    setParams(next, { replace: true });
+    setParams(new URLSearchParams(), { replace: true });
   }
 
-  const hayFiltros = Boolean(q || estado || sla || anio || mes || fechaDesde || fechaHasta || prioridad);
+  const hayFiltros = Boolean(q || estado || sla || anio || mes || fechaDesde || fechaHasta || prioridad || bandeja);
   const titulos = {
     cola: "Sin asignar",
     asignadas: "A mi cargo",
+    abiertas: "Abiertas",
+    en_curso: "En atención",
+    mias: "Mis solicitudes",
+  };
+  const descripciones = {
+    cola: "Tickets enviados que todavía no tienen encargado. ",
+    asignadas: "Tickets abiertos donde tú eres el encargado. ",
+    abiertas: "Tickets que aún no cierran ni están resueltos. ",
+    en_curso: "Tickets con encargado, en proceso. ",
+    mias: "Las solicitudes que tú registraste. ",
   };
 
   return (
@@ -130,9 +145,8 @@ export default function SolicitudesPage() {
         <div className="min-w-0">
           <h2 className="text-xl font-bold sm:text-2xl">{titulos[bandeja] || "Solicitudes"}</h2>
           <p className="text-sm text-slate-500">
-            {bandeja === "cola" && "Tickets enviados que todavía no tienen encargado."}
-            {bandeja === "asignadas" && "Tickets abiertos donde tú eres el encargado."}
-            {!bandeja && `${count} ticket${count === 1 ? "" : "s"}`}
+            {descripciones[bandeja] || ""}
+            {`${count} ticket${count === 1 ? "" : "s"}`}
             {isFetching && !isLoading ? " · actualizando…" : ""}
           </p>
         </div>
@@ -168,13 +182,38 @@ export default function SolicitudesPage() {
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
-            onClick={() => setFiltro("estado", "")}
+            onClick={() => {
+              const next = new URLSearchParams(params);
+              next.delete("page");
+              next.delete("estado");
+              next.delete("bandeja");
+              setParams(next, { replace: true });
+            }}
             className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-              !estado ? "bg-brand-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              !estado && !bandeja ? "bg-brand-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
             Todos
           </button>
+          {isTecnico &&
+            [
+              { id: "cola", label: "Sin asignar" },
+              { id: "asignadas", label: "A mi cargo" },
+            ].map((b) => {
+              const activo = bandeja === b.id;
+              return (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => setFiltro("bandeja", activo ? "" : b.id)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                    activo ? "bg-brand-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {b.label}
+                </button>
+              );
+            })}
           {estados.map((e) => {
             const activo = estado === e.codigo;
             return (
@@ -347,27 +386,20 @@ export default function SolicitudesPage() {
           </table>
         </div>
       </div>
-      {pages > 1 && (
-        <div className="flex items-center justify-between gap-2 text-sm sm:justify-end">
-          <button
-            disabled={page <= 1}
-            className="rounded-lg border px-3 py-1 disabled:opacity-40"
-            onClick={() => setFiltro("page", String(page - 1))}
-          >
-            Anterior
-          </button>
-          <span className="px-2 py-1 text-slate-500">
-            {page} / {pages}
-          </span>
-          <button
-            disabled={page >= pages}
-            className="rounded-lg border px-3 py-1 disabled:opacity-40"
-            onClick={() => setFiltro("page", String(page + 1))}
-          >
-            Siguiente
-          </button>
-        </div>
-      )}
+      <Paginacion
+        page={page}
+        pages={pages}
+        count={count}
+        pageSize={pageSize}
+        onPage={(n) => setFiltro("page", String(n))}
+        onPageSize={(n) => {
+          const next = new URLSearchParams(params);
+          next.delete("page");
+          next.set("page_size", String(n));
+          setParams(next, { replace: true });
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
     </div>
   );
 }

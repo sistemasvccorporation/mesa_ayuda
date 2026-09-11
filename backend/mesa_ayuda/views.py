@@ -26,6 +26,7 @@ from .models import (
     Solicitud,
     TipoActividad,
 )
+from .pagination import MesaPagination
 from .permissions import IsAdminMesa, rol_de
 from .serializers import (
     ConfiguracionMesaSerializer,
@@ -141,6 +142,7 @@ class EstadoViewSet(CatalogoMixin, viewsets.ReadOnlyModelViewSet):
 class SolicitudViewSet(viewsets.ModelViewSet):
     parser_classes = (MultiPartParser, FormParser, JSONParser)
     permission_classes = [IsAuthenticated]
+    pagination_class = MesaPagination
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
@@ -188,6 +190,10 @@ class SolicitudViewSet(viewsets.ModelViewSet):
             qs = qs.filter(estado_id="enviado", asignado_a__isnull=True)
         elif bandeja == "mias":
             qs = qs.filter(solicitante=self.request.user)
+        elif bandeja == "abiertas":
+            qs = qs.exclude(estado_id__in=["cerrado", "cancelado", "borrador", "atendido"])
+        elif bandeja == "en_curso":
+            qs = qs.filter(estado_id__in=["asignado", "en_atencion", "derivado", "pendiente_usuario"])
         if sla in ("vencido", "por_vencer", "ok", "en_pausa"):
             ids = [s.id for s in qs.select_related("categoria", "estado") if sla_estado(s) == sla]
             qs = qs.filter(id__in=ids)

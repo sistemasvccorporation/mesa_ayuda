@@ -7,14 +7,11 @@ import {
   CheckCircle2,
   CircleDot,
   ClipboardList,
-  Clock3,
   Download,
   FileSpreadsheet,
   FolderOpen,
-  Inbox,
   Plus,
   Trophy,
-  UserRound,
   Users,
 } from "lucide-react";
 import api from "../api/client.js";
@@ -30,72 +27,68 @@ async function downloadReport(path, filename, params) {
   window.URL.revokeObjectURL(url);
 }
 
+const MESA = ["admin", "tecnico"];
+const PEDIDO = ["solicitante"];
+
 const KPI = [
+  {
+    key: "todas",
+    label: "Solicitudes",
+    hint: "Total del período",
+    hintSolicitante: "Todas las que registraste",
+    to: "/solicitudes",
+    icon: ClipboardList,
+    tone: "teal",
+    roles: [...MESA, ...PEDIDO],
+  },
   {
     key: "abiertas",
     label: "Abiertas",
-    hint: "En curso en la mesa",
-    to: "/solicitudes",
+    hint: "Aún en curso, sin resolver",
+    hintSolicitante: "Tus tickets aún en curso",
+    to: "/solicitudes?bandeja=abiertas",
     icon: FolderOpen,
     tone: "teal",
+    roles: [...MESA, ...PEDIDO],
   },
   {
     key: "vencidas",
     label: "Vencidas",
-    hint: "Fuera de SLA",
-    to: "/solicitudes?sla=vencido",
+    hint: "Ya están dentro de Abiertas",
+    hintSolicitante: "De tus abiertas, fuera de plazo",
+    to: "/solicitudes?bandeja=abiertas&sla=vencido",
     icon: AlertTriangle,
     tone: "rose",
-  },
-  {
-    key: "sin_asignar",
-    label: "Sin asignar",
-    hint: "Esperan un encargado",
-    to: "/solicitudes?bandeja=cola",
-    icon: Inbox,
-    tone: "amber",
-  },
-  {
-    key: "pendiente_usuario",
-    label: "Pendiente del usuario",
-    hint: "La mesa espera respuesta",
-    to: "/solicitudes?estado=pendiente_usuario",
-    icon: Clock3,
-    tone: "orange",
+    subset: true,
+    roles: [...MESA, ...PEDIDO],
   },
   {
     key: "atendidas",
     label: "Resueltas",
     hint: "Marcadas como resueltas",
+    hintSolicitante: "Tus tickets ya resueltos",
     to: "/solicitudes?estado=atendido",
     icon: CheckCircle2,
     tone: "green",
+    roles: [...MESA, ...PEDIDO],
   },
   {
     key: "cerradas",
     label: "Cerradas",
     hint: "Ciclo completado",
+    hintSolicitante: "Tus tickets cerrados",
     to: "/solicitudes?estado=cerrado",
     icon: CircleDot,
     tone: "slate",
-  },
-  {
-    key: "a_mi_cargo",
-    label: "A mi cargo",
-    hint: "Tú eres el encargado",
-    to: "/solicitudes?bandeja=asignadas",
-    icon: UserRound,
-    tone: "indigo",
-  },
-  {
-    key: "mias",
-    label: "Mis solicitudes",
-    hint: "Las que tú registraste",
-    to: "/solicitudes",
-    icon: ClipboardList,
-    tone: "teal",
+    roles: [...MESA, ...PEDIDO],
   },
 ];
+
+function enlaceKpi(to, anio) {
+  const url = new URL(to, "https://local");
+  if (anio) url.searchParams.set("anio", anio);
+  return `${url.pathname}${url.search}`;
+}
 
 const TONE = {
   teal: {
@@ -154,6 +147,9 @@ function medalla(puesto) {
 
 export default function DashboardPage() {
   const { user, isAdmin } = useAuth();
+  const rol = user?.rol || "solicitante";
+  const esMesa = rol === "admin" || rol === "tecnico";
+  const kpis = KPI.filter((item) => item.roles.includes(rol));
   const actual = String(new Date().getFullYear());
   const [anio, setAnio] = useState(actual);
   const params = useMemo(() => ({ anio: anio || undefined }), [anio]);
@@ -185,12 +181,18 @@ export default function DashboardPage() {
         <div className="pointer-events-none absolute -bottom-24 right-24 h-48 w-48 rounded-full bg-brand-secondary/20 blur-2xl" />
         <div className="relative flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-tint">Panel de la mesa</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-tint">
+              {rol === "admin" ? "Panel de administración" : rol === "tecnico" ? "Panel del encargado" : "Mis solicitudes"}
+            </p>
             <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Hola, {nombre}</h2>
             <p className="mt-2 max-w-xl text-sm text-white/70">
-              {totalMesa
-                ? `${totalMesa} solicitud${totalMesa === 1 ? "" : "es"} en ${anio || "todos los años"}. Revisa vencidas y la cola sin asignar primero.`
-                : "Aún no hay movimiento en este período. Cuando se registren tickets, aquí verás carga, ranking y reportes."}
+              {esMesa
+                ? totalMesa
+                  ? `${totalMesa} solicitud${totalMesa === 1 ? "" : "es"} en ${anio || "todos los años"}. Pulsa un estado para filtrar.`
+                  : "Aún no hay movimiento en este período. Cuando entren tickets, aquí verás carga de la mesa, ranking y reportes."
+                : totalMesa
+                  ? `Tienes ${totalMesa} solicitud${totalMesa === 1 ? "" : "es"} en ${anio || "todos los años"}.`
+                  : "Cuando registres una solicitud, aquí verás su avance."}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -221,35 +223,41 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {KPI.map((item) => {
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {kpis.map((item) => {
           const Icon = item.icon;
           const tone = TONE[item.tone];
           const value = data?.totales?.[item.key] ?? 0;
+          const hint = !esMesa && item.hintSolicitante ? item.hintSolicitante : item.hint;
           return (
             <Link
               key={item.key}
-              to={item.to}
-              className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-18px_rgba(30,140,135,0.45)]"
+              to={enlaceKpi(item.to, anio)}
+              className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)] transition hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-[0_16px_30px_-18px_rgba(30,140,135,0.45)]"
             >
               <span className={`absolute inset-y-0 left-0 w-1 ${tone.bar}`} />
               <div className="flex items-start justify-between gap-3 pl-2">
                 <div className={`grid h-10 w-10 place-items-center rounded-xl ${tone.icon}`}>
                   <Icon size={18} />
                 </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 opacity-0 transition group-hover:opacity-100">
-                  Ver
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-primary">
+                  Ver listado
                 </span>
               </div>
               <div className={`mt-4 pl-2 text-3xl font-extrabold tracking-tight ${tone.value}`}>{value}</div>
               <div className="mt-1 pl-2 text-sm font-semibold text-brand-charcoal">{item.label}</div>
-              <div className="pl-2 text-xs text-slate-500">{item.hint}</div>
+              <div className="pl-2 text-xs text-slate-500">{hint}</div>
             </Link>
           );
         })}
       </section>
+      <p className="-mt-2 text-xs text-slate-500">
+        Abiertas + resueltas + cerradas = el total. Las vencidas no se suman aparte: son abiertas fuera de plazo.
+        {data?.totales?.canceladas ? ` Hay ${data.totales.canceladas} cancelada${data.totales.canceladas === 1 ? "" : "s"}.` : ""}
+      </p>
 
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      <section className={`grid gap-6 ${esMesa ? "xl:grid-cols-[1.15fr_0.85fr]" : ""}`}>
+        {esMesa && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)] sm:p-6">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-start gap-3">
@@ -321,6 +329,7 @@ export default function DashboardPage() {
             </ol>
           )}
         </div>
+        )}
 
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)] sm:p-6">
           <h3 className="text-lg font-bold">Por categoría</h3>
@@ -353,7 +362,9 @@ export default function DashboardPage() {
       <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_-18px_rgba(45,45,45,0.45)] sm:p-6">
         <div className="mb-4">
           <h3 className="text-lg font-bold">Por estado</h3>
-          <p className="text-sm text-slate-500">Cómo está la carga de la mesa en este momento.</p>
+          <p className="text-sm text-slate-500">
+            {esMesa ? "Cómo está la carga de la mesa en este momento." : "Cómo van tus solicitudes en este momento."}
+          </p>
         </div>
         {porEstado.length ? (
           <div className="h-64 min-w-0 overflow-x-auto sm:h-72">

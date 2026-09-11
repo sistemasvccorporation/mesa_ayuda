@@ -78,7 +78,7 @@ def dashboard(request):
     from mesa_ayuda.services import sla_estado
 
     qs = aplicar_periodo(queryset_por_rol(request.user).select_related("categoria", "estado"), request)
-    abiertas = qs.exclude(estado_id__in=["cerrado", "cancelado", "borrador"])
+    abiertas = qs.exclude(estado_id__in=["cerrado", "cancelado", "borrador", "atendido"])
     vencidas = sum(1 for s in abiertas if sla_estado(s) == "vencido")
     por_estado = list(qs.values("estado_id", "estado__nombre", "estado__color_hex").annotate(total=Count("id")))
     por_categoria = list(qs.values("categoria__nombre").annotate(total=Count("id")).order_by("-total")[:8])

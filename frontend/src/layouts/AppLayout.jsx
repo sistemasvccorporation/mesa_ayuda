@@ -8,8 +8,6 @@ import {
   Layers,
   Settings,
   LogOut,
-  Inbox,
-  UserCheck,
   Menu,
   X,
   UserCircle,
@@ -24,11 +22,9 @@ const linkClass = ({ isActive }) =>
   }`;
 
 export default function AppLayout() {
-  const { user, logout, isAdmin, isTecnico } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const bandeja = new URLSearchParams(location.search).get("bandeja");
-  const enLista = location.pathname === "/solicitudes";
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -47,22 +43,12 @@ export default function AppLayout() {
       <NavLink to="/dashboard" className={linkClass}>
         <LayoutDashboard size={18} /> Dashboard
       </NavLink>
-      <NavLink to="/solicitudes" className={() => linkClass({ isActive: enLista && !bandeja })}>
+      <NavLink to="/solicitudes" className={linkClass}>
         <Ticket size={18} /> Solicitudes
       </NavLink>
       <NavLink to="/solicitudes/nueva" className={linkClass}>
         <PlusCircle size={18} /> Nueva solicitud
       </NavLink>
-      {isTecnico && (
-        <>
-          <NavLink to="/solicitudes?bandeja=cola" className={() => linkClass({ isActive: enLista && bandeja === "cola" })}>
-            <Inbox size={18} /> Sin asignar
-          </NavLink>
-          <NavLink to="/solicitudes?bandeja=asignadas" className={() => linkClass({ isActive: enLista && bandeja === "asignadas" })}>
-            <UserCheck size={18} /> A mi cargo
-          </NavLink>
-        </>
-      )}
       {isAdmin && (
         <>
           <NavLink to="/admin/roles" className={linkClass}>
